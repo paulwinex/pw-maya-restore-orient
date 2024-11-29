@@ -1,7 +1,7 @@
 # coding=utf-8
 from pymel.core import *
 import traceback
-
+from .utils import compute_time
 
 class SelectionError(Exception):
     pass
@@ -27,14 +27,22 @@ class ObjOrient(object):
     def reset(self):
         self.object.setMatrix(self.init_mx)
 
+    @compute_time
     def get_init_points(self):
         import random
-        count = self.object_vertex_count
-        all_vtx = list(self.iter_points(self.object))
-        if len(all_vtx) < 4:
+        if self.object_vertex_count < 4:
             raise Exception('So few vertices!')
-        points = all_vtx[random.randrange(0, count)], all_vtx[random.randrange(0, count)], all_vtx[random.randrange(0, count)]
-        return [(all_vtx.index(pt), dt.Vector(pt.getPosition('world'))) for pt in points]
+        points = []
+        all_shapes = self.object.listRelatives(s=1, allDescendents=1)
+        if len(all_shapes) >= 3:
+            random_shapes = random.sample(all_shapes, 3)
+        else:
+            random_shapes = all_shapes*3
+
+        for sh in random_shapes:
+            vtx = sh.vtx[random.randint(0, polyEvaluate(sh, v=True))]
+            points.append((vtx, vtx.getPosition('world')))
+        return points
 
     def _vector_list_to_basis(self, p1, p2, p3):
         x = (p1 - p2).normal()
@@ -42,15 +50,17 @@ class ObjOrient(object):
         z = x.cross(y).normal()
         return x.normal(), y.normal(), z.normal()
 
+    @compute_time
     def move_to_start_position(self):
         if not self.freezed:
             raise Exception('Source object is not freezed')
         pi1, pi2, pi3 = [x[1] for x in self.init_points]
         x1, y1, z1 = self._vector_list_to_basis(pi1, pi2, pi3)
 
-        all_vtx = list(self.iter_points(self.object))
-        curr_points = [(index, dt.Vector(all_vtx[index].getPosition('world'))) for index, init_pt in self.init_points]
-        pr1, pr2, pr3 = [x[1] for x in curr_points]
+        # all_vtx = list(self.iter_points(self.object))
+        # curr_points = [(index, dt.Vector(all_vtx[index].getPosition('world'))) for index, init_pt in self.init_points]
+        curr_points = [PyNode(name).getPosition('world') for name, init_pt in self.init_points]
+        pr1, pr2, pr3 = curr_points
         x2, y2, z2 = self._vector_list_to_basis(pr1, pr2, pr3)
 
         m1 = self.basis_to_transformation_matrix(x1, y1, z1, pi2)
@@ -58,19 +68,20 @@ class ObjOrient(object):
 
         self.object.setMatrix(m2.asMatrixInverse() * m1)
 
-
-
     @property
     def object_vertex_count(self):
         return sum([polyEvaluate(s, v=True) for s in self.iter_shapes(self.object)])
 
     @property
     def center(self):
-        points = [pt.getPosition('world') for pt in self.iter_points(self.object)]
-        x = (max([pt.x for pt in points]) + min([pt.x for pt in points])) / 2
-        y = (max([pt.y for pt in points]) + min([pt.y for pt in points])) / 2
-        z = (max([pt.z for pt in points]) + min([pt.z for pt in points])) / 2
-        return dt.Vector([x, y, z])
+        from restore_object_orient.geo_tools import get_object_center
+        return get_object_center(str(self.object))
+        # return dt.Vector(sum(sum([s.getPoints('world') for s in self.iter_shapes(self.object)], [])) / self.object_vertex_count)
+        # points = [pt.getPosition('world') for pt in self.iter_points(self.object)]
+        # x = (max([pt.x for pt in points]) + min([pt.x for pt in points])) / 2
+        # y = (max([pt.y for pt in points]) + min([pt.y for pt in points])) / 2
+        # z = (max([pt.z for pt in points]) + min([pt.z for pt in points])) / 2
+        # return dt.Vector([x, y, z])
 
     # ====================================
 
@@ -81,43 +92,44 @@ class ObjOrient(object):
         if len(sel) == 1:
             if isinstance(sel[0], MeshEdge):
                 # по одной оси, вторая дефолтная
-                print 'From 1 Edge'
+                print('From 1 Edge')
                 return self.get_3axis_from_edge(sel[0])
             elif isinstance(sel[0], MeshVertex):
                 # по одной точке. Вторая в центре
-                print 'From 1 Point'
+                print('From 1 Point')
                 return self.get_3axis_from_1_point(sel[0])
             elif isinstance(sel[0], MeshFace):
                 # по фейсу
-                print 'From Face'
+                print('From Face')
                 return self.get_3axis_from_face(sel[0])
         elif len(sel) == 2:
             if all([isinstance(x, MeshVertex) for x in sel]):
                 # по двум точкам
-                print 'From 2 points'
+                print('From 2 points')
                 return self.get_3axis_from_2_points(*sel)
             elif all([isinstance(x, MeshEdge) for x in sel]):
                 # по двум ребрам
-                print 'From 2 edges'
+                print('From 2 edges')
                 return self.get_3axis_from_2_edge(*sel)
             elif isinstance(sel[0], MeshVertex) and isinstance(sel[1], MeshEdge):
                 # по ребру и точке
-                print 'From 1 Pint and 1 Edge [1]'
+                print('From 1 Pint and 1 Edge [1]')
                 return self.get_3axis_from_1_point_and_1_edge(sel[0], sel[1])
             elif isinstance(sel[1], MeshVertex) and isinstance(sel[0], MeshEdge):
                 # тоже по ребру и точке но в другом порядке
-                print 'From 1 Pint and 1 Edge [2]'
+                print('From 1 Pint and 1 Edge [2]')
                 return self.get_3axis_from_1_point_and_1_edge(sel[1], sel[0])
         elif len(sel) == 3:
             if all([isinstance(x, MeshVertex) for x in sel]):
                 # по 3 точкам
-                print 'From 3 Pints'
+                print('From 3 Pints')
                 return self.get_3axis_from_3_points(*sel)
         elif len(sel) == 4:
             if all([isinstance(x, MeshVertex) for x in sel]):
                 return self.get_3axis_from_4_points(*sel)
         raise SelectionError('Wrong selection')
 
+    @compute_time
     def get_3axis_from_edge(self, edge):
         pt1, pt2 = edge.connectedVertices()
         x = (pt1.getPosition('world') - pt2.getPosition('world')).normal()
@@ -126,6 +138,7 @@ class ObjOrient(object):
         z = x.cross(y)
         return self.fix_basis(x, y, z)
 
+    @compute_time
     def get_3axis_from_1_point(self, pt):
         y = pt.getNormal('world').normal()
         longest_edge = max([(edge.getLength('world'), edge) for edge in pt.connectedEdges()])[1]
@@ -134,6 +147,7 @@ class ObjOrient(object):
         z = x.cross(y)
         return self.fix_basis(x, y, z)
 
+    @compute_time
     def get_3axis_from_face(self, face):
         edges = [face.node().e[x] for x in face.getEdges()]
         e_map = {x.getLength('world'): x for x in edges}
@@ -144,37 +158,20 @@ class ObjOrient(object):
         z = x.cross(y)
         return self.fix_basis(x, y, z)
 
+    @compute_time
     def get_3axis_from_2_points(self, pt1, pt2):
         x = (pt1.getPosition('world') - pt2.getPosition('world')).normal()
         y = ((pt1.getNormal('world') + pt2.getNormal('world')) / 2).normal()
         z = x.cross(y)
         return x, y, z
 
+    @compute_time
     def get_3axis_from_2_edge(self, e1, e2):
         pt11, pt12 = e1.connectedVertices()
         pt21, pt22 = e2.connectedVertices()
         return self.get_3axis_from_4_points(pt11, pt12, pt21, pt22)
-        #
-        # pt11, pt12 = e1.connectedVertices()
-        #
-        # v1 = (pt11.getPosition('world') - pt12.getPosition('world')).normal()
-        # pt21, pt22 = e2.connectedVertices()
-        # v2 = (pt21.getPosition('world') - pt22.getPosition('world')).normal()
-        #
-        # d = v1.dot(v2)
-        # if d < 0:
-        #     v2 = (pt22.getPosition('world') - pt21.getPosition('world')).normal()
-        #
-        # if abs(d) > 0.5:
-        #     v2 = (pt11.getPosition('world') - pt21.getPosition('world')).normal()
-        #
-        # x = v1.normal()
-        # y = x.cross(v2.normal()).cross(x)
-        # if y.y < 0:
-        #     y *= -1
-        # z = x.cross(y)
-        # return x, y, z
 
+    @compute_time
     def get_3axis_from_1_point_and_1_edge(self, pt, edge):
         pt1, pt2 = edge.connectedVertices()
         a, b = pt1.getPosition('world'), pt2.getPosition('world')
@@ -190,6 +187,7 @@ class ObjOrient(object):
 
         return self.fix_basis(x, y, z)
 
+    @compute_time
     def get_3axis_from_3_points(self, pt1, pt2, pt3):
         p1, p2, p3 = pt1.getPosition('world'), pt2.getPosition('world'), pt3.getPosition('world')
         d1 = [(p1 - p2).normal().dot((p1 - p3).normal()), p1]
@@ -207,6 +205,7 @@ class ObjOrient(object):
         z = x.cross(y)
         return self.fix_basis(x, y, z)
 
+    @compute_time
     def get_3axis_from_4_points(self, pt11, pt12, pt21, pt22):
         v1 = (pt11.getPosition('world') - pt12.getPosition('world')).normal()
         v2 = (pt21.getPosition('world') - pt22.getPosition('world')).normal()
@@ -224,23 +223,29 @@ class ObjOrient(object):
         return self.fix_basis(x, y, z)
 
     # ========================================
-
+    @compute_time
     def basis_to_transformation_matrix(self, x, y, z, pos=None):
         mx = dt.TransformationMatrix(x.x, x.y, x.z, 0,
                                      y.x, y.y, y.z, 0,
                                      z.x, z.y, z.z, 0)
         if pos:
-            mx.setTranslation(pos, 'world')
+            mx.setTranslation(tuple(pos), 'world')
         return mx
 
+    @compute_time
     def transformation_matrix_to_basis(self, mx):
-        return dt.Vector(mx[0][0], mx[0][1], mx[0][2]), dt.Vector(mx[1][0], mx[1][1], mx[1][2]), dt.Vector(mx[2][0], mx[2][1], mx[2][2])
+        return (dt.Vector(mx[0][0], mx[0][1], mx[0][2]),
+                dt.Vector(mx[1][0], mx[1][1], mx[1][2]),
+                dt.Vector(mx[2][0], mx[2][1], mx[2][2])
+                )
 
+    @compute_time
     def get_offset_matrix(self, mx):
         orig_mx = self.object.getMatrix(worldSpace=True)
         offset_m = dt.TransformationMatrix(orig_mx * mx.asMatrixInverse())
         return offset_m
 
+    @compute_time
     def orient(self, main_axis=None):
         self.clear_preview_axis()
         x, y, z = self.get_axis_from_selection()
@@ -252,34 +257,48 @@ class ObjOrient(object):
             self.object.setMatrix(final_mx)
             self.drop_down()
 
+    @compute_time
     def get_rotation_matrix(self, axis, degree, center=None):
         """Возвращает матрицу поворота вокруг центра для задданного объекта"""
         rotate = [0, 0, 0]
         index = dict(x=0, y=1, z=2)[axis.lower().strip('-')]
         rotate[index] += degree * (-1 if '-' in axis else 1)
         m = dt.TransformationMatrix()
-        m.setRotatePivot(center or self.center, 'object', True)
+        m.setRotatePivot(tuple(center or self.center), 'object', True)
         m.setRotation(rotate)
         return m
 
+    @compute_time
     def fix_basis(self, x, y, z):
         if x.cross(y).dot(z) < 0:
             z *= -1
         return x, y, z
 
+    @compute_time
     def rotate_object(self, axis, degree):
         mx = self.get_rotation_matrix(axis, degree)
         self.object.setMatrix(self.object.getMatrix() * mx)
         self.drop_down()
 
+    @compute_time
     def drop_down(self, basis=None):
-        offset = min([x.getPosition('world')[1] for x in self.iter_points(self.object)])
+        from restore_object_orient.geo_tools import get_lowes_point
+
+        # offset = min([x.getPosition('world')[1] for x in self.iter_points(self.object)])
+        offset = get_lowes_point(str(self.object))
         move(self.object, [0, -offset, 0], relative=True)
 
+    @compute_time
     def move_to_origin(self):
         center = self.center
         move(self.object, [-center.x, 0, -center.z], relative=True)
 
+    @compute_time
+    def move_to_center(self):
+        center = self.center
+        move(self.object, [-center.x, -center.y, -center.z], relative=True)
+
+    @compute_time
     def closest_axis(self, vector):
         axis = dict(
             x=dt.Vector([1, 0, 0]),
@@ -290,6 +309,7 @@ class ObjOrient(object):
         return axis[sorted(values.keys(), key=lambda x: values[x])[-1]]
 
     @classmethod
+    @compute_time
     def create_axis(cls, pt1, pt2=None, color=None, normalize=False, center=None):
         p1 = pt1
         p2 = pt2
@@ -307,6 +327,7 @@ class ObjOrient(object):
         select(cl=1)
         return crv
 
+    @compute_time
     def create_basis(self, x, y, z, scale=1, pos=None, parent_name=None):
         center = pos or self.get_selection_center()
         p = createNode('transform', name=parent_name or self.grp_name)
@@ -315,6 +336,7 @@ class ObjOrient(object):
         p | self.create_axis(z * scale, color='b', center=center)
         return p
 
+    @compute_time
     def show_axis(self, axes=None, scale=None, main_axis=None):
         if not axes:
             try:
@@ -326,22 +348,25 @@ class ObjOrient(object):
         x, y, z = axes
         if main_axis:
             x, y, z = self.align_up_to(x, y, z, main_axis)
-        print 'X', x
-        print 'Y', y
-        print 'Z', z
+        print('X', x)
+        print('Y', y)
+        print('Z', z)
         sel = selected()
         self.clear_preview_axis()
         self.create_basis(x, y, z, scale=scale)
         select(sel)
 
+    @compute_time
     def clear_preview_axis(self):
         if self.preview_axis_exists():
             delete(self.grp_name)
 
+    @compute_time
     def preview_axis_exists(self):
         return objExists(self.grp_name)
 
     @staticmethod
+    @compute_time
     def get_selection_center():
         sel = selected()
         if not sel:
@@ -359,17 +384,20 @@ class ObjOrient(object):
         return pos
 
     @staticmethod
+    @compute_time
     def iter_shapes(obj):
         shapes = obj.listRelatives(s=1, allDescendents=1)
         for s in shapes:
             yield s
 
-    @classmethod
-    def iter_points(cls, obj):
-        for s in cls.iter_shapes(obj):
-            for vtx in s.vtx:
-                yield vtx
+    # @classmethod
+    # @compute_time
+    # def iter_points(cls, obj):
+    #     for s in cls.iter_shapes(obj):
+    #         for vtx in s.vtx:
+    #             yield vtx
 
+    @compute_time
     def freeze_transformations(self):
         with UndoChunk():
             for tr in self.object.listRelatives(allDescendents=1, typ=nt.Transform):
@@ -379,6 +407,7 @@ class ObjOrient(object):
             xform(self.object, piv=[0, 0, 0], ws=True)
         self.freezed = True
 
+    @compute_time
     def align_up_to(self, x, y, z, to_axis):
         c = dt.Vector()
         if to_axis == 'x':
@@ -399,6 +428,7 @@ class ObjOrient(object):
         r_mx = rm * mx
         return self.transformation_matrix_to_basis(r_mx)
 
+    @compute_time
     def _create_offset_basis(self):
         pi1, pi2, pi3 = [x[1] for x in self.init_points]
         x1, y1, z1 = self._vector_list_to_basis(pi1, pi2, pi3)

@@ -1,13 +1,17 @@
 from __future__ import absolute_import
+
+import traceback
+
 from PySide2.QtWidgets import *
 from PySide2.QtCore import *
 from PySide2.QtGui import *
 from functools import partial
 from .widgets import dialog_UI
 from pymel.core import *
-from . import actions
+from . import orient
+from importlib import reload
 reload(dialog_UI)
-reload(actions)
+reload(orient)
 
 qMaya = ui.PyUI('MayaWindow').asQtObject()
 
@@ -24,15 +28,23 @@ class ObjectOrientDialog(QWidget, dialog_UI.Ui_ObjectOrient):
         self.axis_z_btn.clicked.connect(partial(self.on_align, 'z'))
         self.align_btn.clicked.connect(self.on_align)
 
-        self.x_add_btn.clicked.connect(partial(self.on_rotate, 'x', 90))
-        self.y_add_btn.clicked.connect(partial(self.on_rotate, 'y', 90))
-        self.z_add_btn.clicked.connect(partial(self.on_rotate, 'z', 90))
-        self.x_sub_btn.clicked.connect(partial(self.on_rotate, 'x', -90))
-        self.y_sub_btn.clicked.connect(partial(self.on_rotate, 'y', -90))
-        self.z_sub_btn.clicked.connect(partial(self.on_rotate, 'z', -90))
+        self.x_add90_btn.clicked.connect(partial(self.on_rotate, 'x', 90))
+        self.y_add90_btn.clicked.connect(partial(self.on_rotate, 'y', 90))
+        self.z_add90_btn.clicked.connect(partial(self.on_rotate, 'z', 90))
+        self.x_add180_btn.clicked.connect(partial(self.on_rotate, 'x', 180))
+        self.y_add180_btn.clicked.connect(partial(self.on_rotate, 'y', 180))
+        self.z_add180_btn.clicked.connect(partial(self.on_rotate, 'z', 180))
+
+        self.x_sub90_btn.clicked.connect(partial(self.on_rotate, 'x', -90))
+        self.y_sub90_btn.clicked.connect(partial(self.on_rotate, 'y', -90))
+        self.z_sub90_btn.clicked.connect(partial(self.on_rotate, 'z', -90))
+        self.x_sub180_btn.clicked.connect(partial(self.on_rotate, 'x', -180))
+        self.y_sub180_btn.clicked.connect(partial(self.on_rotate, 'y', -180))
+        self.z_sub180_btn.clicked.connect(partial(self.on_rotate, 'z', -180))
 
         self.drop_btn.clicked.connect(self.on_drop)
-        self.set_origin_btn.clicked.connect(self.on_origin)
+        # self.set_origin_btn.clicked.connect(self.on_origin)
+        self.to_center_btn.clicked.connect(self.on_base_to_center)
         self.freeze_btn.clicked.connect(self.on_freeze)
         self.reset_btn.clicked.connect(self.on_reset)
         self.restore_btn.clicked.connect(self.on_restore)
@@ -40,11 +52,13 @@ class ObjectOrientDialog(QWidget, dialog_UI.Ui_ObjectOrient):
         self.orient = None  # type: actions.ObjOrient
         self.set_ui_enabled(False)
         self.restore_btn.setEnabled(False)
+        self.resize(320, 200)
 
     def set_ui_enabled(self, val):
         self.orient_grp.setEnabled(bool(val))
         self.transf_grp.setEnabled(bool(val))
-        self.freeze_btn.setEnabled(bool(val))
+        self.set_origin_grp.setEnabled(bool(val))
+        self.finalize_grp.setEnabled(bool(val))
         self.reset_btn.setEnabled(not self.orient.freezed if self.orient else False)
 
     def set_object(self, obj=None):
@@ -60,8 +74,8 @@ class ObjectOrientDialog(QWidget, dialog_UI.Ui_ObjectOrient):
         if not isinstance(obj, nt.Transform):
             PopupError('Select Transform Node')
             return
-        reload(actions)
-        self.orient = actions.ObjOrient(obj)
+        reload(orient)
+        self.orient = orient.ObjOrient(obj)
         self.obj_name_lb.setText(obj.name())
         self.set_ui_enabled(True)
         self.restore_btn.setEnabled(False)
@@ -103,6 +117,11 @@ class ObjectOrientDialog(QWidget, dialog_UI.Ui_ObjectOrient):
             return
         self.orient.move_to_origin()
 
+    def on_base_to_center(self):
+        if not self.orient:
+            return
+        self.orient.move_to_center()
+
     def on_freeze(self):
         if self.orient:
             try:
@@ -111,6 +130,7 @@ class ObjectOrientDialog(QWidget, dialog_UI.Ui_ObjectOrient):
                 self.reset_btn.setEnabled(False)
             except Exception as e:
                 PopupError(str(e))
+                traceback.print_exc()
 
     def on_reset(self):
         if not self.orient:
@@ -127,4 +147,5 @@ class ObjectOrientDialog(QWidget, dialog_UI.Ui_ObjectOrient):
             self.orient.move_to_start_position()
         except Exception as e:
             PopupError(str(e))
+            traceback.print_exc()
         self.freeze_btn.setEnabled(False)
