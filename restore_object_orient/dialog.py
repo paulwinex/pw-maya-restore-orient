@@ -42,6 +42,10 @@ class ObjectOrientDialog(QWidget, dialog_UI.Ui_ObjectOrient):
         self.y_sub180_btn.clicked.connect(partial(self.on_rotate, 'y', -180))
         self.z_sub180_btn.clicked.connect(partial(self.on_rotate, 'z', -180))
 
+        self.rotate_to_x_btn.clicked.connect(partial(self.rotate_to_world_axis, 'x'))
+        self.rotate_to_y_btn.clicked.connect(partial(self.rotate_to_world_axis, 'y'))
+        self.rotate_to_z_btn.clicked.connect(partial(self.rotate_to_world_axis, 'z'))
+
         self.drop_btn.clicked.connect(self.on_drop)
         # self.set_origin_btn.clicked.connect(self.on_origin)
         self.to_center_btn.clicked.connect(self.on_base_to_center)
@@ -106,6 +110,14 @@ class ObjectOrientDialog(QWidget, dialog_UI.Ui_ObjectOrient):
         if not self.orient:
             return
         self.orient.rotate_object(axis, value)
+
+    def rotate_to_world_axis(self, axis):
+        if not self.orient:
+            return
+        try:
+            self.orient.rotate_to_world_axis(axis)
+        except Exception as e:
+            QMessageBox.critical(self, 'Error', str(e))
 
     def on_drop(self):
         if not self.orient:

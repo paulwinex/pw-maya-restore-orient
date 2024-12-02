@@ -78,7 +78,7 @@ class ObjOrient(object):
 
     # ====================================
 
-    def get_axis_from_selection(self):
+    def get_3axis_from_selection(self):
         sel = selected(fl=1)
         if not sel:
             raise SelectionError('Nothing is selected')
@@ -181,8 +181,6 @@ class ObjOrient(object):
         z = x.cross(y)
         return self.fix_basis(x.normal(), y.normal(), z.normal())
 
-
-
     @compute_time
     def get_3axis_from_2_points(self, pt1, pt2):
         x = (pt1.getPosition('world') - pt2.getPosition('world')).normal()
@@ -248,6 +246,55 @@ class ObjOrient(object):
         return self.fix_basis(x, y, z)
 
     # ========================================
+    def get_1axis_from_selection(self):
+        # получает ось из выбранных элементов для вращения к мировой оси
+        sel = selected()
+        sel = selected(fl=1)
+        if not sel:
+            raise SelectionError('Nothing is selected')
+        if len(sel) == 1:
+            if isinstance(sel[0], MeshFace):
+                return sel[0].getNormal('world').normal()
+            elif isinstance(sel[0], MeshVertex):
+                return sel[0].getNormal('world').normal()
+            elif isinstance(sel[0], MeshEdge):
+                pt1, pt2 = sel[0].connectedVertices()
+                return (pt1.getPosition('world') - pt2.getPosition('world')).normal()
+        elif len(sel) == 2:
+            if all(isinstance(x, MeshVertex) for x in sel):
+                return (sel[1].getPosition('world') - sel[0].getPosition('world')).normal()
+        elif all(isinstance(x, MeshEdge) for x in sel):
+            normals = []
+            for edge in sel:
+                pt11, pt12 = edge.connectedVertices()
+                normals.append((pt11.getPosition('world') - pt12.getPosition('world')).normal())
+            average_axis = sum(normals) / len(normals)
+            return average_axis.normal()
+        else:
+            raise SelectionError('Wrong selection')
+
+    def rotate_to_world_axis(self, world_axis: str):
+        src_axis = self.get_1axis_from_selection()
+        world_axis_list = {
+            'x': dt.Vector(1, 0, 0),
+            'y': dt.Vector(0, 1, 0),
+            'z': dt.Vector(0, 0, 1)
+        }
+        target_axis = world_axis_list[world_axis]
+
+        if src_axis * target_axis < 0:
+            target_axis = -target_axis
+
+        angle = src_axis.angle(target_axis)
+        rotation_axis = src_axis.cross(target_axis)
+        quaternion = dt.Quaternion(angle, rotation_axis)
+        rotation_matrix = dt.TransformationMatrix()
+        rotation_matrix.addRotationQuaternion(*list(quaternion), dt.Space.kWorld)
+        curr_matrix = self.object.getMatrix()
+        self.object.setMatrix(curr_matrix * rotation_matrix, worldSpace=True)
+
+
+    # ========================================
     @compute_time
     def basis_to_transformation_matrix(self, x, y, z, pos=None):
         mx = dt.TransformationMatrix(x.x, x.y, x.z, 0,
@@ -273,7 +320,7 @@ class ObjOrient(object):
     @compute_time
     def orient(self, main_axis=None):
         self.clear_preview_axis()
-        x, y, z = [a.normal() for a in self.get_axis_from_selection()]
+        x, y, z = [a.normal() for a in self.get_3axis_from_selection()]
         print(x, y, z)
         if main_axis:
             x, y, z = self.align_up_to(x, y, z, main_axis)
@@ -366,7 +413,7 @@ class ObjOrient(object):
     def show_axis(self, axes=None, scale=None, main_axis=None):
         if not axes:
             try:
-                axes = [a.normal() for a in self.get_axis_from_selection()]
+                axes = [a.normal() for a in self.get_3axis_from_selection()]
             except SelectionError as e:
                 displayWarning(str(e))
                 return

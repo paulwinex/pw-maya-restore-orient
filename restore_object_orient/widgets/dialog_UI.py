@@ -17,7 +17,7 @@ class Ui_ObjectOrient(object):
     def setupUi(self, ObjectOrient):
         if not ObjectOrient.objectName():
             ObjectOrient.setObjectName(u"ObjectOrient")
-        ObjectOrient.resize(311, 752)
+        ObjectOrient.resize(311, 756)
         self.verticalLayout_3 = QVBoxLayout(ObjectOrient)
         self.verticalLayout_3.setObjectName(u"verticalLayout_3")
         self.obj_btp = QGroupBox(ObjectOrient)
@@ -45,11 +45,6 @@ class Ui_ObjectOrient(object):
         self.orient_grp.setObjectName(u"orient_grp")
         self.verticalLayout = QVBoxLayout(self.orient_grp)
         self.verticalLayout.setObjectName(u"verticalLayout")
-        self.preview_cbx = QCheckBox(self.orient_grp)
-        self.preview_cbx.setObjectName(u"preview_cbx")
-
-        self.verticalLayout.addWidget(self.preview_cbx)
-
         self.horizontalLayout_2 = QHBoxLayout()
         self.horizontalLayout_2.setObjectName(u"horizontalLayout_2")
         self.align_btn = QPushButton(self.orient_grp)
@@ -64,10 +59,27 @@ class Ui_ObjectOrient(object):
 
         self.verticalLayout.addLayout(self.horizontalLayout_2)
 
+        self.preview_cbx = QCheckBox(self.orient_grp)
+        self.preview_cbx.setObjectName(u"preview_cbx")
+
+        self.verticalLayout.addWidget(self.preview_cbx)
+
+        self.line = QFrame(self.orient_grp)
+        self.line.setObjectName(u"line")
+        self.line.setFrameShape(QFrame.HLine)
+        self.line.setFrameShadow(QFrame.Sunken)
+
+        self.verticalLayout.addWidget(self.line)
+
         self.label = QLabel(self.orient_grp)
         self.label.setObjectName(u"label")
 
         self.verticalLayout.addWidget(self.label)
+
+        self.label_2 = QLabel(self.orient_grp)
+        self.label_2.setObjectName(u"label_2")
+
+        self.verticalLayout.addWidget(self.label_2)
 
         self.horizontalLayout = QHBoxLayout()
         self.horizontalLayout.setObjectName(u"horizontalLayout")
@@ -94,11 +106,6 @@ class Ui_ObjectOrient(object):
 
 
         self.verticalLayout.addLayout(self.horizontalLayout)
-
-        self.label_2 = QLabel(self.orient_grp)
-        self.label_2.setObjectName(u"label_2")
-
-        self.verticalLayout.addWidget(self.label_2)
 
 
         self.verticalLayout_3.addWidget(self.orient_grp)
@@ -203,26 +210,26 @@ class Ui_ObjectOrient(object):
 
         self.gridLayout.addWidget(self.z_add180_btn, 2, 0, 1, 1)
 
-        self.label_3 = QLabel(self.transf_grp)
-        self.label_3.setObjectName(u"label_3")
-        self.label_3.setStyleSheet(u"font: 16pt \"Noto Sans\";")
-        self.label_3.setAlignment(Qt.AlignCenter)
+        self.rotate_to_x_btn = QPushButton(self.transf_grp)
+        self.rotate_to_x_btn.setObjectName(u"rotate_to_x_btn")
+        self.rotate_to_x_btn.setMaximumSize(QSize(32, 28))
+        self.rotate_to_x_btn.setFont(font)
 
-        self.gridLayout.addWidget(self.label_3, 0, 2, 1, 1)
+        self.gridLayout.addWidget(self.rotate_to_x_btn, 0, 2, 1, 1)
 
-        self.label_4 = QLabel(self.transf_grp)
-        self.label_4.setObjectName(u"label_4")
-        self.label_4.setStyleSheet(u"font: 16pt \"Noto Sans\";")
-        self.label_4.setAlignment(Qt.AlignCenter)
+        self.rotate_to_y_btn = QPushButton(self.transf_grp)
+        self.rotate_to_y_btn.setObjectName(u"rotate_to_y_btn")
+        self.rotate_to_y_btn.setMaximumSize(QSize(32, 28))
+        self.rotate_to_y_btn.setFont(font)
 
-        self.gridLayout.addWidget(self.label_4, 1, 2, 1, 1)
+        self.gridLayout.addWidget(self.rotate_to_y_btn, 1, 2, 1, 1)
 
-        self.label_5 = QLabel(self.transf_grp)
-        self.label_5.setObjectName(u"label_5")
-        self.label_5.setStyleSheet(u"font: 16pt \"Noto Sans\";")
-        self.label_5.setAlignment(Qt.AlignCenter)
+        self.rotate_to_z_btn = QPushButton(self.transf_grp)
+        self.rotate_to_z_btn.setObjectName(u"rotate_to_z_btn")
+        self.rotate_to_z_btn.setMaximumSize(QSize(32, 28))
+        self.rotate_to_z_btn.setFont(font)
 
-        self.gridLayout.addWidget(self.label_5, 2, 2, 1, 1)
+        self.gridLayout.addWidget(self.rotate_to_z_btn, 2, 2, 1, 1)
 
         self.gridLayout.setColumnStretch(0, 1)
         self.gridLayout.setColumnStretch(1, 1)
@@ -289,13 +296,13 @@ class Ui_ObjectOrient(object):
         self.set_obj_btn.setText(QCoreApplication.translate("ObjectOrient", u"Set Object", None))
         self.obj_name_lb.setText(QCoreApplication.translate("ObjectOrient", u"Object Not Set", None))
         self.orient_grp.setTitle(QCoreApplication.translate("ObjectOrient", u"Orient", None))
+        self.align_btn.setText(QCoreApplication.translate("ObjectOrient", u"Align Selected", None))
         self.preview_cbx.setText(QCoreApplication.translate("ObjectOrient", u"Preview Mode", None))
-        self.align_btn.setText(QCoreApplication.translate("ObjectOrient", u"Align", None))
         self.label.setText(QCoreApplication.translate("ObjectOrient", u"Align Selected To Asxis", None))
+        self.label_2.setText(QCoreApplication.translate("ObjectOrient", u"<html><head/><body><p><span style=\" font-style:italic;\">Hold Shift To Reverse</span></p></body></html>", None))
         self.axis_x_btn.setText(QCoreApplication.translate("ObjectOrient", u"X", None))
         self.axis_y_btn.setText(QCoreApplication.translate("ObjectOrient", u"Y", None))
         self.axis_z_btn.setText(QCoreApplication.translate("ObjectOrient", u"Z", None))
-        self.label_2.setText(QCoreApplication.translate("ObjectOrient", u"<html><head/><body><p><span style=\" font-style:italic;\">Hold Shift To Reverse</span></p></body></html>", None))
         self.transf_grp.setTitle(QCoreApplication.translate("ObjectOrient", u"Rotate / Transform", None))
         self.x_sub90_btn.setText(QCoreApplication.translate("ObjectOrient", u"-90", None))
         self.x_sub180_btn.setText(QCoreApplication.translate("ObjectOrient", u"-180", None))
@@ -309,9 +316,9 @@ class Ui_ObjectOrient(object):
         self.z_sub180_btn.setText(QCoreApplication.translate("ObjectOrient", u"-180", None))
         self.x_add180_btn.setText(QCoreApplication.translate("ObjectOrient", u"+180", None))
         self.z_add180_btn.setText(QCoreApplication.translate("ObjectOrient", u"+180", None))
-        self.label_3.setText(QCoreApplication.translate("ObjectOrient", u"X", None))
-        self.label_4.setText(QCoreApplication.translate("ObjectOrient", u"Y", None))
-        self.label_5.setText(QCoreApplication.translate("ObjectOrient", u"Z", None))
+        self.rotate_to_x_btn.setText(QCoreApplication.translate("ObjectOrient", u"X", None))
+        self.rotate_to_y_btn.setText(QCoreApplication.translate("ObjectOrient", u"Y", None))
+        self.rotate_to_z_btn.setText(QCoreApplication.translate("ObjectOrient", u"Z", None))
         self.set_origin_grp.setTitle(QCoreApplication.translate("ObjectOrient", u"Set Origin", None))
         self.to_center_btn.setText(QCoreApplication.translate("ObjectOrient", u"Center", None))
         self.drop_btn.setText(QCoreApplication.translate("ObjectOrient", u"Bottom", None))
