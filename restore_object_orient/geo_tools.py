@@ -46,25 +46,30 @@ def get_lowes_point(*objects: str):
     return get_lowest_point_for_list(shapes)
 
 
-def get_object_center(obj):
+def iter_object_points(obj):
     selectionList = om.MSelectionList()
     shapes = cmds.listRelatives(obj, allDescendents=True, type='mesh')
     for shape in shapes:
         selectionList.add(shape)
-
-    max_x = min_x = max_y = min_y = max_z = min_z = 0
     for i in range(selectionList.length()):
         dagPath = selectionList.getDagPath(i)
         mesh = om.MFnMesh(dagPath)
 
         points = mesh.getPoints(om.MSpace.kWorld)
         for point in points:
-            max_x = max((max_x, point.x))
-            max_y = max((max_y, point.y))
-            max_z = max((max_z, point.z))
-            min_x = min((min_x, point.x))
-            min_y = min((min_y, point.y))
-            min_z = min((min_z, point.z))
+            yield point
+
+
+def get_object_center(obj):
+    obj = str(obj)
+    max_x = min_x = max_y = min_y = max_z = min_z = 0
+    for point in iter_object_points(obj):
+        max_x = max((max_x, point.x))
+        max_y = max((max_y, point.y))
+        max_z = max((max_z, point.z))
+        min_x = min((min_x, point.x))
+        min_y = min((min_y, point.y))
+        min_z = min((min_z, point.z))
     return (om.MVector(max_x, max_y, max_z) + om.MVector(min_x, min_y, min_z)) / 2
 
 

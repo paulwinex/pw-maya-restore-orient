@@ -46,9 +46,16 @@ class ObjectOrientDialog(QWidget, dialog_UI.Ui_ObjectOrient):
         self.rotate_to_y_btn.clicked.connect(partial(self.rotate_to_world_axis, 'y'))
         self.rotate_to_z_btn.clicked.connect(partial(self.rotate_to_world_axis, 'z'))
 
+        self.rotate_to_xz_btn.clicked.connect(partial(self.rotate_to_world_plane, 'x', 'z'))
+        self.rotate_to_xy_btn.clicked.connect(partial(self.rotate_to_world_plane, 'x', 'y'))
+        self.rotate_to_yz_btn.clicked.connect(partial(self.rotate_to_world_plane, 'y', 'z'))
+        self.rotate_to_yx_btn.clicked.connect(partial(self.rotate_to_world_plane, 'y', 'x'))
+        self.rotate_to_zy_btn.clicked.connect(partial(self.rotate_to_world_plane, 'z', 'y'))
+        self.rotate_to_zx_btn.clicked.connect(partial(self.rotate_to_world_plane, 'z', 'x'))
+
         self.drop_btn.clicked.connect(self.on_drop)
-        # self.set_origin_btn.clicked.connect(self.on_origin)
         self.to_center_btn.clicked.connect(self.on_base_to_center)
+        self.to_selected_btn.clicked.connect(self.on_base_to_selected)
         self.freeze_btn.clicked.connect(self.on_freeze)
         self.reset_btn.clicked.connect(self.on_reset)
         self.restore_btn.clicked.connect(self.on_restore)
@@ -83,6 +90,7 @@ class ObjectOrientDialog(QWidget, dialog_UI.Ui_ObjectOrient):
         self.obj_name_lb.setText(obj.name())
         self.set_ui_enabled(True)
         self.restore_btn.setEnabled(False)
+        self.freeze_btn.setEnabled(True)
 
     def on_align(self, main_axis=None):
         if not self.orient:
@@ -117,12 +125,22 @@ class ObjectOrientDialog(QWidget, dialog_UI.Ui_ObjectOrient):
         try:
             self.orient.rotate_to_world_axis(axis)
         except Exception as e:
+            traceback.print_exc()
+            QMessageBox.critical(self, 'Error', str(e))
+
+    def rotate_to_world_plane(self, axis1, axis2):
+        if not self.orient:
+            return
+        try:
+            self.orient.rotate_to_world_plane(axis1, axis2)
+        except Exception as e:
             QMessageBox.critical(self, 'Error', str(e))
 
     def on_drop(self):
         if not self.orient:
             return
-        self.orient.drop_down()
+        modifiers = QApplication.keyboardModifiers()
+        self.orient.drop_down(to_center=modifiers == Qt.ShiftModifier)
 
     def on_origin(self):
         if not self.orient:
@@ -133,6 +151,11 @@ class ObjectOrientDialog(QWidget, dialog_UI.Ui_ObjectOrient):
         if not self.orient:
             return
         self.orient.move_to_center()
+
+    def on_base_to_selected(self):
+        if not self.orient:
+            return
+        self.orient.move_to_selected()
 
     def on_freeze(self):
         if self.orient:
@@ -151,6 +174,7 @@ class ObjectOrientDialog(QWidget, dialog_UI.Ui_ObjectOrient):
             PopupError('Object already Freezed')
         self.orient.reset()
         self.restore_btn.setEnabled(False)
+        self.freeze_btn.setEnabled(True)
 
     def on_restore(self):
         if not self.orient:
