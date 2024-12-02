@@ -2,6 +2,7 @@
 from pymel.core import *
 import traceback
 from .utils import compute_time
+from . import geo_tools
 
 class SelectionError(Exception):
     pass
@@ -57,8 +58,6 @@ class ObjOrient(object):
         pi1, pi2, pi3 = [x[1] for x in self.init_points]
         x1, y1, z1 = self._vector_list_to_basis(pi1, pi2, pi3)
 
-        # all_vtx = list(self.iter_points(self.object))
-        # curr_points = [(index, dt.Vector(all_vtx[index].getPosition('world'))) for index, init_pt in self.init_points]
         curr_points = [PyNode(name).getPosition('world') for name, init_pt in self.init_points]
         pr1, pr2, pr3 = curr_points
         x2, y2, z2 = self._vector_list_to_basis(pr1, pr2, pr3)
@@ -70,18 +69,12 @@ class ObjOrient(object):
 
     @property
     def object_vertex_count(self):
-        return sum([polyEvaluate(s, v=True) for s in self.iter_shapes(self.object)])
+        return sum([polyEvaluate(s, v=True) for s in geo_tools.iter_shapes(self.object)])
 
     @property
     def center(self):
         from restore_object_orient.geo_tools import get_object_center
         return get_object_center(str(self.object))
-        # return dt.Vector(sum(sum([s.getPoints('world') for s in self.iter_shapes(self.object)], [])) / self.object_vertex_count)
-        # points = [pt.getPosition('world') for pt in self.iter_points(self.object)]
-        # x = (max([pt.x for pt in points]) + min([pt.x for pt in points])) / 2
-        # y = (max([pt.y for pt in points]) + min([pt.y for pt in points])) / 2
-        # z = (max([pt.z for pt in points]) + min([pt.z for pt in points])) / 2
-        # return dt.Vector([x, y, z])
 
     # ====================================
 
@@ -119,6 +112,10 @@ class ObjOrient(object):
                 # тоже по ребру и точке но в другом порядке
                 print('From 1 Pint and 1 Edge [2]')
                 return self.get_3axis_from_1_point_and_1_edge(sel[1], sel[0])
+            elif all(isinstance(x, MeshFace) for x in sel):
+                # по двум фейсам
+                print('From 2 Faces')
+                return self.get_3axis_from_multiple_faces(sel)
         elif len(sel) == 3:
             if all([isinstance(x, MeshVertex) for x in sel]):
                 # по 3 точкам
@@ -127,6 +124,12 @@ class ObjOrient(object):
         elif len(sel) == 4:
             if all([isinstance(x, MeshVertex) for x in sel]):
                 return self.get_3axis_from_4_points(*sel)
+        elif all(isinstance(x, MeshFace) for x in sel):
+            print('By Multiply fases')
+            return self.get_3axis_from_multiple_faces(sel)
+        elif all(isinstance(x, MeshEdge) for x in sel):
+            print('By Multiply edges')
+            return self.get_3axis_from_multiple_edges(sel)
         raise SelectionError('Wrong selection')
 
     @compute_time
@@ -136,7 +139,7 @@ class ObjOrient(object):
         f1, f2 = ls(edge.connectedFaces(), fl=1)
         y = ((f1.getNormal('world') + f1.getNormal('world')) / 2).normal()
         z = x.cross(y)
-        return self.fix_basis(x, y, z)
+        return self.fix_basis(x.normal(), y.normal(), z.normal())
 
     @compute_time
     def get_3axis_from_1_point(self, pt):
@@ -145,7 +148,7 @@ class ObjOrient(object):
         pt2 = [x for x in longest_edge.connectedVertices() if not x == pt][0]
         x = (pt.getPosition('world') - pt2.getPosition('world')).normal()
         z = x.cross(y)
-        return self.fix_basis(x, y, z)
+        return self.fix_basis(x.normal(), y.normal(), z.normal())
 
     @compute_time
     def get_3axis_from_face(self, face):
@@ -157,6 +160,28 @@ class ObjOrient(object):
         y = face.getNormal('world').normal()
         z = x.cross(y)
         return self.fix_basis(x, y, z)
+
+    @compute_time
+    def get_3axis_from_multiple_faces(self, faces):
+        y = sum([face.getNormal('world') for face in faces]) / len(faces)
+        x = y.cross(dt.Vector(1,0,0))
+        z = x.cross(y)
+        return self.fix_basis(x, y, z)
+
+    def get_3axis_from_multiple_edges(self, edges):
+        normals = []
+        for edge in edges:
+            pt1, pt2 = edge.connectedVertices()
+            normals.append(pt1.getNormal('world') + pt2.getNormal('world'))
+
+        average_normal = sum(normals) / len(normals)
+        y = average_normal.normal()
+        _x, _y, _z = self.get_3axis_from_edge(edge)
+        x = y.cross(_x)
+        z = x.cross(y)
+        return self.fix_basis(x.normal(), y.normal(), z.normal())
+
+
 
     @compute_time
     def get_3axis_from_2_points(self, pt1, pt2):
@@ -248,7 +273,8 @@ class ObjOrient(object):
     @compute_time
     def orient(self, main_axis=None):
         self.clear_preview_axis()
-        x, y, z = self.get_axis_from_selection()
+        x, y, z = [a.normal() for a in self.get_axis_from_selection()]
+        print(x, y, z)
         if main_axis:
             x, y, z = self.align_up_to(x, y, z, main_axis)
         mx = self.basis_to_transformation_matrix(x, y, z, self.center)
@@ -329,7 +355,7 @@ class ObjOrient(object):
 
     @compute_time
     def create_basis(self, x, y, z, scale=1, pos=None, parent_name=None):
-        center = pos or self.get_selection_center()
+        center = pos or geo_tools.get_selection_center()
         p = createNode('transform', name=parent_name or self.grp_name)
         p | self.create_axis(x * scale, color='r', center=center)
         p | self.create_axis(y * scale, color='g', center=center)
@@ -340,7 +366,7 @@ class ObjOrient(object):
     def show_axis(self, axes=None, scale=None, main_axis=None):
         if not axes:
             try:
-                axes = self.get_axis_from_selection()
+                axes = [a.normal() for a in self.get_axis_from_selection()]
             except SelectionError as e:
                 displayWarning(str(e))
                 return
@@ -365,30 +391,30 @@ class ObjOrient(object):
     def preview_axis_exists(self):
         return objExists(self.grp_name)
 
-    @staticmethod
-    @compute_time
-    def get_selection_center():
-        sel = selected()
-        if not sel:
-            return dt.Vector()
-        pos_array = []
-        for s in sel:
-            if isinstance(s, (MeshEdge)):
-                for p in s.connectedVertices():
-                    pos_array.append(p.getPosition('world'))
-            elif isinstance(s, MeshFace):
-                pos_array.extend([dt.Vector(x) for x in s.getPoints('world')])
-            elif isinstance(s, MeshVertex):
-                pos_array.append(s.getPosition('world'))
-        pos = sum(pos_array, dt.Vector()) / len(pos_array)
-        return pos
+    # @staticmethod
+    # @compute_time
+    # def get_selection_center():
+    #     sel = selected()
+    #     if not sel:
+    #         return dt.Vector()
+    #     pos_array = []
+    #     for s in sel:
+    #         if isinstance(s, MeshEdge):
+    #             for p in s.connectedVertices():
+    #                 pos_array.append(p.getPosition('world'))
+    #         elif isinstance(s, MeshFace):
+    #             pos_array.extend([dt.Vector(x) for x in s.getPoints('world')])
+    #         elif isinstance(s, MeshVertex):
+    #             pos_array.append(s.getPosition('world'))
+    #     pos = sum(pos_array, dt.Vector()) / len(pos_array)
+    #     return pos
 
-    @staticmethod
-    @compute_time
-    def iter_shapes(obj):
-        shapes = obj.listRelatives(s=1, allDescendents=1)
-        for s in shapes:
-            yield s
+    # @staticmethod
+    # @compute_time
+    # def iter_shapes(obj):
+    #     shapes = obj.listRelatives(s=1, allDescendents=1)
+    #     for s in shapes:
+    #         yield s
 
     # @classmethod
     # @compute_time
@@ -399,12 +425,7 @@ class ObjOrient(object):
 
     @compute_time
     def freeze_transformations(self):
-        with UndoChunk():
-            for tr in self.object.listRelatives(allDescendents=1, typ=nt.Transform):
-                makeIdentity(tr, apply=True, t=1, r=1, s=1, n=0, pn=1)
-                xform(tr, piv=[0, 0, 0], ws=True)
-            makeIdentity(self.object, apply=True, t=1, r=1, s=1, n=0, pn=1)
-            xform(self.object, piv=[0, 0, 0], ws=True)
+        geo_tools.freeze_transformations(self.object)
         self.freezed = True
 
     @compute_time
