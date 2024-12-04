@@ -2,10 +2,10 @@ from __future__ import absolute_import
 from importlib import reload
 
 def show():
-    from . import dialog, orient, geo_tools
-    reload(dialog)
+    from . import orient_dialog, orient, tools
+    reload(orient_dialog)
     reload(orient)
-    reload(geo_tools)
-    w = dialog.ObjectOrientDialog()
+    reload(tools)
+    w = orient_dialog.ObjectOrientDialog()
     w.show()
     return w

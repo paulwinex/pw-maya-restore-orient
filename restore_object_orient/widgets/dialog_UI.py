@@ -120,7 +120,9 @@ class Ui_ObjectOrient(object):
         self.z_sub180_btn.setObjectName(u"z_sub180_btn")
         self.z_sub180_btn.setMinimumSize(QSize(40, 25))
         self.z_sub180_btn.setMaximumSize(QSize(55, 25))
-        self.z_sub180_btn.setFont(font)
+        font2 = QFont()
+        font2.setPointSize(10)
+        self.z_sub180_btn.setFont(font2)
 
         self.gridLayout.addWidget(self.z_sub180_btn, 2, 6, 1, 1)
 
@@ -144,7 +146,7 @@ class Ui_ObjectOrient(object):
         self.z_add180_btn.setObjectName(u"z_add180_btn")
         self.z_add180_btn.setMinimumSize(QSize(40, 25))
         self.z_add180_btn.setMaximumSize(QSize(55, 25))
-        self.z_add180_btn.setFont(font)
+        self.z_add180_btn.setFont(font2)
 
         self.gridLayout.addWidget(self.z_add180_btn, 2, 0, 1, 1)
 
@@ -160,7 +162,7 @@ class Ui_ObjectOrient(object):
         self.y_sub180_btn.setObjectName(u"y_sub180_btn")
         self.y_sub180_btn.setMinimumSize(QSize(40, 25))
         self.y_sub180_btn.setMaximumSize(QSize(55, 25))
-        self.y_sub180_btn.setFont(font)
+        self.y_sub180_btn.setFont(font2)
 
         self.gridLayout.addWidget(self.y_sub180_btn, 1, 6, 1, 1)
 
@@ -168,7 +170,7 @@ class Ui_ObjectOrient(object):
         self.y_add180_btn.setObjectName(u"y_add180_btn")
         self.y_add180_btn.setMinimumSize(QSize(40, 25))
         self.y_add180_btn.setMaximumSize(QSize(55, 25))
-        self.y_add180_btn.setFont(font)
+        self.y_add180_btn.setFont(font2)
 
         self.gridLayout.addWidget(self.y_add180_btn, 1, 0, 1, 1)
 
@@ -176,7 +178,7 @@ class Ui_ObjectOrient(object):
         self.x_add180_btn.setObjectName(u"x_add180_btn")
         self.x_add180_btn.setMinimumSize(QSize(40, 25))
         self.x_add180_btn.setMaximumSize(QSize(55, 25))
-        self.x_add180_btn.setFont(font)
+        self.x_add180_btn.setFont(font2)
 
         self.gridLayout.addWidget(self.x_add180_btn, 0, 0, 1, 1)
 
@@ -222,7 +224,7 @@ class Ui_ObjectOrient(object):
         self.x_sub180_btn.setObjectName(u"x_sub180_btn")
         self.x_sub180_btn.setMinimumSize(QSize(40, 25))
         self.x_sub180_btn.setMaximumSize(QSize(55, 25))
-        self.x_sub180_btn.setFont(font)
+        self.x_sub180_btn.setFont(font2)
 
         self.gridLayout.addWidget(self.x_sub180_btn, 0, 6, 1, 1)
 
@@ -353,7 +355,7 @@ class Ui_ObjectOrient(object):
         self.axis_x_btn.setText(QCoreApplication.translate("ObjectOrient", u"X", None))
         self.axis_y_btn.setText(QCoreApplication.translate("ObjectOrient", u"Y", None))
         self.axis_z_btn.setText(QCoreApplication.translate("ObjectOrient", u"Z", None))
-        self.transf_grp.setTitle(QCoreApplication.translate("ObjectOrient", u"Rotate / Transform", None))
+        self.transf_grp.setTitle(QCoreApplication.translate("ObjectOrient", u"Rotate Object", None))
         self.z_sub180_btn.setText(QCoreApplication.translate("ObjectOrient", u"-180", None))
         self.z_add90_btn.setText(QCoreApplication.translate("ObjectOrient", u"+90", None))
         self.z_sub90_btn.setText(QCoreApplication.translate("ObjectOrient", u"-90", None))

@@ -1,17 +1,13 @@
 from __future__ import absolute_import
-
-import traceback
-
 from PySide2.QtWidgets import *
 from PySide2.QtCore import *
 from PySide2.QtGui import *
 from functools import partial
+import traceback
 from .widgets import dialog_UI
 from pymel.core import *
 from . import orient
-from importlib import reload
-reload(dialog_UI)
-reload(orient)
+
 
 qMaya = ui.PyUI('MayaWindow').asQtObject()
 
@@ -60,7 +56,7 @@ class ObjectOrientDialog(QWidget, dialog_UI.Ui_ObjectOrient):
         self.reset_btn.clicked.connect(self.on_reset)
         self.restore_btn.clicked.connect(self.on_restore)
 
-        self.orient = None  # type: actions.ObjOrient
+        self.orient = None  # type: ignore
         self.set_ui_enabled(False)
         self.restore_btn.setEnabled(False)
         self.resize(320, 200)
@@ -85,7 +81,6 @@ class ObjectOrientDialog(QWidget, dialog_UI.Ui_ObjectOrient):
         if not isinstance(obj, nt.Transform):
             PopupError('Select Transform Node')
             return
-        reload(orient)
         self.orient = orient.ObjOrient(obj)
         self.obj_name_lb.setText(obj.name())
         self.set_ui_enabled(True)
@@ -126,36 +121,52 @@ class ObjectOrientDialog(QWidget, dialog_UI.Ui_ObjectOrient):
             self.orient.rotate_to_world_axis(axis)
         except Exception as e:
             traceback.print_exc()
-            QMessageBox.critical(self, 'Error', str(e))
+            PopupError(str(e))
 
     def rotate_to_world_plane(self, axis1, axis2):
         if not self.orient:
             return
+        rot_axis = dt.Vector(0, 1, 0) if QApplication.keyboardModifiers() == Qt.ShiftModifier else None
         try:
-            self.orient.rotate_to_world_plane(axis1, axis2)
+            self.orient.rotate_to_world_plane(axis1, axis2, rot_axis)
         except Exception as e:
-            QMessageBox.critical(self, 'Error', str(e))
+            PopupError(str(e))
 
     def on_drop(self):
         if not self.orient:
             return
-        modifiers = QApplication.keyboardModifiers()
-        self.orient.drop_down(to_center=modifiers == Qt.ShiftModifier)
+        try:
+            self.orient.drop_down(to_center=QApplication.keyboardModifiers() == Qt.ShiftModifier)
+        except Exception as e:
+            PopupError(str(e))
+            traceback.print_exc()
 
     def on_origin(self):
         if not self.orient:
             return
-        self.orient.move_to_origin()
+        try:
+            self.orient.move_to_origin()
+        except Exception as e:
+            PopupError(str(e))
+            traceback.print_exc()
 
     def on_base_to_center(self):
         if not self.orient:
             return
-        self.orient.move_to_center()
+        try:
+            self.orient.move_to_center()
+        except Exception as e:
+            PopupError(str(e))
+            traceback.print_exc()
 
     def on_base_to_selected(self):
         if not self.orient:
             return
-        self.orient.move_to_selected()
+        try:
+            self.orient.move_to_selected()
+        except Exception as e:
+            PopupError(str(e))
+            traceback.print_exc()
 
     def on_freeze(self):
         if self.orient:
@@ -172,7 +183,12 @@ class ObjectOrientDialog(QWidget, dialog_UI.Ui_ObjectOrient):
             return
         if self.orient.freezed:
             PopupError('Object already Freezed')
-        self.orient.reset()
+            return
+        try:
+            self.orient.reset()
+        except Exception as e:
+            PopupError(str(e))
+            traceback.print_exc()
         self.restore_btn.setEnabled(False)
         self.freeze_btn.setEnabled(True)
 
