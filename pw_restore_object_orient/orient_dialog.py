@@ -1,10 +1,16 @@
 from __future__ import absolute_import
-from PySide2.QtWidgets import *
-from PySide2.QtCore import *
-from PySide2.QtGui import *
+try:
+    from PySide2.QtWidgets import *
+    from PySide2.QtCore import *
+    from PySide2.QtGui import *
+    from .widgets import dialog_UI2 as dialog_UI
+except ModuleNotFoundError:
+    from PySide6.QtWidgets import *
+    from PySide6.QtCore import *
+    from PySide6.QtGui import *
+    from .widgets import dialog_UI6 as dialog_UI
 from functools import partial
 import traceback
-from .widgets import dialog_UI
 from pymel.core import *
 from . import orient
 
