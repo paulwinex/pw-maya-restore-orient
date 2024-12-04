@@ -256,7 +256,7 @@ def get_3axis_from_face(face: MeshFace):
 
 
 def get_3axis_from_multiple_faces(faces: list[MeshFace]) -> tuple[dt.Vector, ...]:
-    assert len(faces) > 2
+    assert len(faces) >= 2
     y: dt.Vector = sum([face.getNormal('world') for face in faces]) / len(faces)
     x = y.cross(dt.Vector(1,0,0))
     z = x.cross(y)
