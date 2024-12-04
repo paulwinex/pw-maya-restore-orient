@@ -360,7 +360,7 @@ def rotate_to_world_axis(src_axis: dt.Vector, obj, world_axis: str):
     obj.setMatrix(curr_matrix * rotation_matrix, worldSpace=True)
 
 
-def rotate_to_world_plane(src_axis, obj, world_axis1: str, world_axis2: str):
+def _rotate_to_world_plane(src_axis: dt.Vector, obj, world_axis1: str, world_axis2: str, rotation_axis: dt.Vector = None):
     obj = PyNode(obj)
     world_axis_list = {
         'x': dt.Vector(1, 0, 0),
@@ -376,7 +376,7 @@ def rotate_to_world_plane(src_axis, obj, world_axis1: str, world_axis2: str):
     if src_axis.dot(target_axis) < 0:
         target_axis = -target_axis
     angle = src_axis.angle(target_axis)
-    rotation_axis = src_axis.cross(target_axis)
+    rotation_axis = rotation_axis or src_axis.cross(target_axis)
     quaternion = dt.Quaternion(angle, rotation_axis)
     rotation_matrix = dt.TransformationMatrix()
     rotation_matrix.addRotationQuaternion(*list(quaternion), dt.Space.kWorld)
@@ -384,7 +384,54 @@ def rotate_to_world_plane(src_axis, obj, world_axis1: str, world_axis2: str):
     new_matrix = curr_matrix * rotation_matrix
     obj.setMatrix(new_matrix, worldSpace=True)
 
+
+def rotate_to_world_plane(src_axis: dt.Vector, obj,
+                          world_axis1: str, world_axis2: str,
+                          rotation_axis: str = None):
+    print(f'Rotate to plane {world_axis1}{world_axis2} by {rotation_axis if rotation_axis else "closest"}')
+    obj = PyNode(obj)
+    world_axis_list = {
+        'x': dt.Vector(1, 0, 0),
+        'y': dt.Vector(0, 1, 0),
+        'z': dt.Vector(0, 0, 1)
+    }
+    axis1 = world_axis_list[world_axis1]
+    axis2 = world_axis_list[world_axis2]
+
+    if rotation_axis:
+        rotation_axis = world_axis_list.get(rotation_axis)
+    plane_normal = axis1.cross(axis2)
+    plane_normal.normalize()
+    projection = src_axis - (src_axis.dot(plane_normal) / plane_normal.dot(plane_normal)) * plane_normal
+    projection.normalize()
+    target_axis = projection
+    if src_axis.dot(target_axis) < 0:
+        target_axis = -target_axis
+
+    if rotation_axis:
+        rotation_axis.normalize()
+        proj_src = src_axis - (src_axis.dot(rotation_axis) / rotation_axis.dot(rotation_axis)) * rotation_axis
+        proj_target = target_axis - (target_axis.dot(rotation_axis) / rotation_axis.dot(rotation_axis)) * rotation_axis
+        proj_src.normalize()
+        proj_target.normalize()
+        angle = proj_src.angle(proj_target)
+        cross_product = proj_src.cross(proj_target)
+        if cross_product.dot(rotation_axis) < 0:
+            angle = -angle
+    else:
+        rotation_axis = src_axis.cross(target_axis)
+        rotation_axis.normalize()
+        angle = src_axis.angle(target_axis)
+    quaternion = dt.Quaternion(angle, rotation_axis)
+    rotation_matrix = dt.TransformationMatrix()
+    rotation_matrix.addRotationQuaternion(*list(quaternion), dt.Space.kWorld)
+    curr_matrix = obj.getMatrix()
+    new_matrix = curr_matrix * rotation_matrix
+    obj.setMatrix(new_matrix, worldSpace=True)
+
+
 # TRIGONOMETRY
+
 
 def vector_list_to_basis(p1: dt.Point, p2: dt.Point, p3: dt.Point) -> tuple[dt.Vector, ...]:
     x = (p1 - p2).normal()

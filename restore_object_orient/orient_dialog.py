@@ -126,11 +126,16 @@ class ObjectOrientDialog(QWidget, dialog_UI.Ui_ObjectOrient):
     def rotate_to_world_plane(self, axis1, axis2):
         if not self.orient:
             return
-        rot_axis = dt.Vector(0, 1, 0) if QApplication.keyboardModifiers() == Qt.ShiftModifier else None
+        rotation_axis = None
+        if QApplication.keyboardModifiers() == Qt.ShiftModifier:
+            rotation_axis = axis1
+        elif QApplication.keyboardModifiers() == Qt.ControlModifier:
+            rotation_axis = axis2
         try:
-            self.orient.rotate_to_world_plane(axis1, axis2, rot_axis)
+            self.orient.rotate_to_world_plane(axis1, axis2, rotation_axis)
         except Exception as e:
             PopupError(str(e))
+            traceback.print_exc()
 
     def on_drop(self):
         if not self.orient:
