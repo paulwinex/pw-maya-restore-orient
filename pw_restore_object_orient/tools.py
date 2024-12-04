@@ -338,6 +338,13 @@ def get_3axis_from_4_points(pt11: dt.Point, pt12: dt.Point, pt21: dt.Point, pt22
     z = x.cross(y)
     return fix_basis(x, y, z)
 
+
+def faces_to_basis(faces) -> tuple[dt.Vector, ...]:
+    y: dt.Vector = sum([face.getNormal('world') for face in faces]) / len(faces)
+    x: dt.Vector = y.cross(dt.Vector(1, 0, 0))
+    z: dt.Vector = x.cross(y)
+    return fix_basis(x, y, z)
+
 # Geo Operations
 
 def rotate_to_world_axis(src_axis: dt.Vector, obj, world_axis: str):

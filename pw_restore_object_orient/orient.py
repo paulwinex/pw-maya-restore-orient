@@ -67,6 +67,13 @@ class ObjOrient(object):
         tools.rotate_to_world_axis(src_axis, self.object, world_axis)
 
     def rotate_to_world_plane(self, world_axis1: str, world_axis2: str, rot_axis = None):
+        # for faves
+        # sel = selected()
+        # if all(isinstance(item, MeshFace) for item in sel):
+        #     src_axis = tools.faces_to_basis(sel)[0]
+        # for face and point
+        # for other
+        # else:
         src_axis = tools.get_1axis_from_selection()
         tools.rotate_to_world_plane(src_axis, self.object, world_axis1, world_axis2, rot_axis)
 
@@ -92,9 +99,7 @@ class ObjOrient(object):
         self.drop_down()
 
     def drop_down(self, to_center=False):
-        from restore_object_orient.tools import get_lowes_point
-
-        offset = get_lowes_point(str(self.object))
+        offset = tools.get_lowes_point(str(self.object))
         pos = dt.Vector(0, -offset, 0)
         if to_center:
             center = dt.Vector(*tools.get_object_center(self.object))
