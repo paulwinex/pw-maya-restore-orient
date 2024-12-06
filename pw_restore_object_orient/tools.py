@@ -23,7 +23,7 @@ def get_lowest_point_for_object(obj):
     return min_y
 
 
-def get_lowest_point_for_list(objects):
+def get_lowest_y_coord_for_list(objects) -> float:
     min_y = float('inf')
 
     selectionList = om.MSelectionList()
@@ -42,14 +42,14 @@ def get_lowest_point_for_list(objects):
     return min_y
 
 
-def get_lowes_point(*objects: str):
+def get_lowes_y_pos(*objects: str) -> float:
     if not objects:
         raise ValueError('Empty list')
     shapes = list(*chain(cmds.listRelatives(x, allDescendents=True, type='mesh') for x in objects))
     if not shapes:
         raise ValueError('No mesh objects found')
     print('Compute objects count:', len(shapes))
-    return get_lowest_point_for_list(shapes)
+    return get_lowest_y_coord_for_list(shapes)
 
 
 def iter_object_points(obj):
@@ -68,15 +68,16 @@ def iter_object_points(obj):
 
 def get_object_center(obj):
     obj = str(obj)
-    max_x = min_x = max_y = min_y = max_z = min_z = 0
+    max_x = min_x = max_y = min_y = max_z = min_z = None
     for point in iter_object_points(obj):
-        max_x = max((max_x, point.x))
-        max_y = max((max_y, point.y))
-        max_z = max((max_z, point.z))
-        min_x = min((min_x, point.x))
-        min_y = min((min_y, point.y))
-        min_z = min((min_z, point.z))
-    return (om.MVector(max_x, max_y, max_z) + om.MVector(min_x, min_y, min_z)) / 2
+        max_x = max((max_x, point.x)) if max_x is not None else point.x
+        max_y = max((max_y, point.y)) if max_y is not None else point.y
+        max_z = max((max_z, point.z)) if max_z is not None else point.z
+        min_x = min((min_x, point.x)) if min_x is not None else point.x
+        min_y = min((min_y, point.y)) if min_y is not None else point.y
+        min_z = min((min_z, point.z)) if min_z is not None else point.z
+    assert all( isinstance(x, float) for x in (max_x, max_y, max_z, min_x, min_y, min_z)), 'Empty object'
+    return dt.Vector(tuple((om.MVector(max_x, max_y, max_z) + om.MVector(min_x, min_y, min_z)) / 2))
 
 
 def get_selection_center():
@@ -257,24 +258,46 @@ def get_3axis_from_face(face: MeshFace):
 
 def get_3axis_from_multiple_faces(faces: list[MeshFace]) -> tuple[dt.Vector, ...]:
     assert len(faces) >= 2
-    y: dt.Vector = sum([face.getNormal('world') for face in faces]) / len(faces)
-    x = y.cross(dt.Vector(1,0,0))
-    z = x.cross(y)
-    return fix_basis(x, y, z)
+    y: dt.Vector = sum([face.getNormal('world').normal() for face in faces]) / len(faces)
+    if y.length() > 0.2:
+        x = y.cross(dt.Vector(1, 0, 0))
+        z = x.cross(y)
+        return fix_basis(x, y, z)
+    else:
+        # probably is circle loop?
+        print('Circular loop')
+        x = faces[0].getNormal('world').normal()
+        next_index = len(faces)//4 if len(faces) > 3 else [-1]
+        z = faces[next_index].getNormal('world').normal()
+        y = z.cross(x)
+        x = z.cross(y)
+        return fix_basis(x, y, z)
 
 
 def get_3axis_from_multiple_edges(edges: list[MeshEdge]) -> tuple[dt.Vector, ...]:
     assert len(edges) > 2
     normals = []
-    for edge in edges:
-        pt1, pt2 = edge.connectedVertices()
-        normals.append(pt1.getNormal('world') + pt2.getNormal('world'))
-    average_normal: dt.Vector = sum(normals) / len(normals)
-    y = average_normal.normal()
-    _x, _y, _z = get_3axis_from_edge(edges[0])
-    x = y.cross(_x)
-    z = x.cross(y)
-    return fix_basis(x.normal(), y.normal(), z.normal())
+    if is_edge_loop_closed(edges):
+        print('For edge loop')
+        points = [edge.connectedVertices()[0].getPosition('world') for edge in edges]
+        center = sum(points) / len(points)
+        x = (points[0] - center).normal()
+        second_point_index = len(points)//4 if len(points) > 3 else len(points)//4
+        z = (points[second_point_index] - center).normal()
+        y  = z.cross(x)
+        x = z.cross(y)
+        return fix_basis(x, y, z)
+    else:
+        print('For edge chain')
+        for edge in edges:
+            pt1, pt2 = edge.connectedVertices()
+            normals.append(pt1.getNormal('world') + pt2.getNormal('world'))
+        average_normal: dt.Vector = sum(normals) / len(normals)
+        z = average_normal.normal()
+        _x, _y, y = get_3axis_from_edge(edges[0])
+        x = z.cross(_x)
+        y = x.cross(z)
+        return fix_basis(x.normal(), z.normal(), y.normal())
 
 
 def get_3axis_from_2_points(pt1: dt.Point, pt2: dt.Point) -> tuple[dt.Vector, ...]:
@@ -436,6 +459,38 @@ def rotate_to_world_plane(src_axis: dt.Vector, obj,
     new_matrix = curr_matrix * rotation_matrix
     obj.setMatrix(new_matrix, worldSpace=True)
 
+
+def is_edge_loop_closed(edges):
+    if not edges:
+        return False
+    vertex_to_edges = {}
+    for edge in edges:
+        vertices = edge.connectedVertices()
+        for vertex in vertices:
+            vertex_index = vertex.index()
+            if vertex_index not in vertex_to_edges:
+                vertex_to_edges[vertex_index] = []
+            vertex_to_edges[vertex_index].append(edge)
+    start_vertex_index = next(iter(vertex_to_edges))
+    current_vertex_index = start_vertex_index
+    visited_edges = set()
+
+    while True:
+        connected_edges = vertex_to_edges[current_vertex_index]
+        if not connected_edges:
+            return False
+        next_edge = None
+        for edge in connected_edges:
+            if edge.index() not in visited_edges:
+                next_edge = edge
+                break
+        if next_edge is None:
+            return current_vertex_index == start_vertex_index
+        visited_edges.add(next_edge.index())
+        vertices = next_edge.connectedVertices()
+        next_vertex_index = vertices[0].index() if vertices[0].index() != current_vertex_index else vertices[1].index()
+        current_vertex_index = next_vertex_index
+    return False
 
 # TRIGONOMETRY
 

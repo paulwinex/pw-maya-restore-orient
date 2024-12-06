@@ -1,4 +1,9 @@
 from __future__ import absolute_import
+
+from importlib import reload
+
+from setuptools.errors import ExecError
+
 try:
     from PySide2.QtWidgets import *
     from PySide2.QtCore import *
@@ -13,68 +18,101 @@ from functools import partial
 import traceback
 from pymel.core import *
 from . import orient
+reload(dialog_UI)
 
 
 qMaya = ui.PyUI('MayaWindow').asQtObject()
 
 
-class ObjectOrientDialog(QWidget, dialog_UI.Ui_ObjectOrient):
+class ObjectOrientDialog(QMainWindow, dialog_UI.Ui_ObjectOrient):
+    manual_url = 'https://github.com/paulwinex/pw-maya-restore-object-orient/README.md'
+
     def __init__(self):
         super(ObjectOrientDialog, self).__init__(qMaya)
         self.setupUi(self)
         self.setWindowFlags(Qt.Tool)
-
+        self._alter_widgets = []
+        # Current Object
         self.set_obj_btn.clicked.connect(self.set_object)
-        self.axis_x_btn.clicked.connect(partial(self.on_align, 'x'))
-        self.axis_y_btn.clicked.connect(partial(self.on_align, 'y'))
-        self.axis_z_btn.clicked.connect(partial(self.on_align, 'z'))
-        self.align_btn.clicked.connect(self.on_align)
-
-        self.x_add90_btn.clicked.connect(partial(self.on_rotate, 'x', 90))
-        self.y_add90_btn.clicked.connect(partial(self.on_rotate, 'y', 90))
-        self.z_add90_btn.clicked.connect(partial(self.on_rotate, 'z', 90))
-        self.x_add180_btn.clicked.connect(partial(self.on_rotate, 'x', 180))
-        self.y_add180_btn.clicked.connect(partial(self.on_rotate, 'y', 180))
-        self.z_add180_btn.clicked.connect(partial(self.on_rotate, 'z', 180))
-
-        self.x_sub90_btn.clicked.connect(partial(self.on_rotate, 'x', -90))
-        self.y_sub90_btn.clicked.connect(partial(self.on_rotate, 'y', -90))
-        self.z_sub90_btn.clicked.connect(partial(self.on_rotate, 'z', -90))
-        self.x_sub180_btn.clicked.connect(partial(self.on_rotate, 'x', -180))
-        self.y_sub180_btn.clicked.connect(partial(self.on_rotate, 'y', -180))
-        self.z_sub180_btn.clicked.connect(partial(self.on_rotate, 'z', -180))
-
+        self.set_obj_btn.setProperty('btn_text', {'default': 'Set Object', 'shift': 'Reset Object'})
+        # Align selected
+        self.align_btn.clicked.connect(self.on_align_pressed)
+        self.align_btn.setProperty('btn_text', {'default': 'Quick Align', 'shift': '-Quick Align', 'ctrl': 'Preview'})
+        self.axis_x_btn.clicked.connect(partial(self.on_align_pressed, 'x'))
+        self.axis_x_btn.setProperty('btn_text', {'default': 'X', 'shift': '-X'})
+        self.axis_y_btn.clicked.connect(partial(self.on_align_pressed, 'y'))
+        self.axis_y_btn.setProperty('btn_text', {'default': 'Y', 'shift': '-Y'})
+        self.axis_z_btn.clicked.connect(partial(self.on_align_pressed, 'z'))
+        self.axis_z_btn.setProperty('btn_text', {'default': 'Z', 'shift': '-Z'})
+        self._alter_widgets.extend([
+            self.set_obj_btn, self.align_btn, self.axis_x_btn, self.axis_y_btn, self.axis_z_btn,
+        ])
+        # Rotate selected to
         self.rotate_to_x_btn.clicked.connect(partial(self.rotate_to_world_axis, 'x'))
         self.rotate_to_y_btn.clicked.connect(partial(self.rotate_to_world_axis, 'y'))
         self.rotate_to_z_btn.clicked.connect(partial(self.rotate_to_world_axis, 'z'))
 
         self.rotate_to_xz_btn.clicked.connect(partial(self.rotate_to_world_plane, 'x', 'z'))
+        self.rotate_to_xz_btn.setProperty('btn_text', {'default': 'XZ', 'shift': 'Xz', 'ctrl': 'xZ'})
         self.rotate_to_xy_btn.clicked.connect(partial(self.rotate_to_world_plane, 'x', 'y'))
+        self.rotate_to_xy_btn.setProperty('btn_text', {'default': 'XY', 'shift': 'Xy', 'ctrl': 'xY'})
         self.rotate_to_yz_btn.clicked.connect(partial(self.rotate_to_world_plane, 'y', 'z'))
+        self.rotate_to_yz_btn.setProperty('btn_text', {'default': 'YZ', 'shift': 'Yz', 'ctrl': 'yZ'})
         self.rotate_to_yx_btn.clicked.connect(partial(self.rotate_to_world_plane, 'y', 'x'))
-        self.rotate_to_zy_btn.clicked.connect(partial(self.rotate_to_world_plane, 'z', 'y'))
+        self.rotate_to_yx_btn.setProperty('btn_text', {'default': 'YX', 'shift': 'Yx', 'ctrl': 'yX'})
         self.rotate_to_zx_btn.clicked.connect(partial(self.rotate_to_world_plane, 'z', 'x'))
+        self.rotate_to_zx_btn.setProperty('btn_text', {'default': 'ZX', 'shift': 'Zx', 'ctrl': 'zX'})
+        self.rotate_to_zy_btn.clicked.connect(partial(self.rotate_to_world_plane, 'z', 'y'))
+        self.rotate_to_zy_btn.setProperty('btn_text', {'default': 'ZY', 'shift': 'Zy', 'ctrl': 'zY'})
+        self._alter_widgets.extend([
+            self.rotate_to_xz_btn, self.rotate_to_xy_btn, self.rotate_to_yz_btn,
+            self.rotate_to_yx_btn, self.rotate_to_zx_btn, self.rotate_to_zy_btn,
+        ])
 
-        self.drop_btn.clicked.connect(self.on_drop)
-        self.to_center_btn.clicked.connect(self.on_base_to_center)
-        self.to_selected_btn.clicked.connect(self.on_base_to_selected)
-        self.freeze_btn.clicked.connect(self.on_freeze)
-        self.reset_btn.clicked.connect(self.on_reset)
-        self.restore_btn.clicked.connect(self.on_restore)
-
+        self.x_rot_add_btn.clicked.connect(partial(self.on_rotate_pressed, 'x', 1))
+        self.x_rot_add_btn.setProperty('btn_text', {'default': '+90', 'shift': '+180', 'ctrl': '+45'})
+        self.x_rot_sub_btn.clicked.connect(partial(self.on_rotate_pressed, 'x', -1))
+        self.x_rot_sub_btn.setProperty('btn_text', {'default': '-90', 'shift': '-180', 'ctrl': '-45'})
+        self.y_rot_add_btn.clicked.connect(partial(self.on_rotate_pressed, 'y', 1))
+        self.y_rot_add_btn.setProperty('btn_text', {'default': '+90', 'shift': '+180', 'ctrl': '+45'})
+        self.y_rot_sub_btn.clicked.connect(partial(self.on_rotate_pressed, 'y', -1))
+        self.y_rot_sub_btn.setProperty('btn_text', {'default': '-90', 'shift': '-180', 'ctrl': '-45'})
+        self.z_rot_add_btn.clicked.connect(partial(self.on_rotate_pressed, 'z', 1))
+        self.z_rot_add_btn.setProperty('btn_text', {'default': '+90', 'shift': '+180', 'ctrl': '+45'})
+        self.z_rot_sub_btn.clicked.connect(partial(self.on_rotate_pressed, 'z', -1))
+        self.z_rot_sub_btn.setProperty('btn_text', {'default': '-90', 'shift': '-180', 'ctrl': '-45'})
+        self._alter_widgets.extend([
+            self.x_rot_add_btn, self.x_rot_sub_btn,
+            self.y_rot_add_btn, self.y_rot_sub_btn,
+            self.z_rot_add_btn, self.z_rot_sub_btn,
+        ])
+        # Set origin
+        self.set_origin_to_base_btn.clicked.connect(self.on_origin_to_y_pressed)
+        self.set_origin_to_center_btn.clicked.connect(self.on_origin_to_center_pressed)
+        self.set_origin_to_selected_btn.clicked.connect(self.on_origin_to_selected_pressed)
+        # Finalize
+        self.freeze_btn.clicked.connect(self.on_freeze_pressed)
+        self.reset_btn.clicked.connect(self.on_reset_pressed)
+        self.restore_btn.clicked.connect(self.on_restore_pressed)
+        # Variables
         self.orient = None  # type: ignore
+        self.setFocusPolicy(Qt.StrongFocus)
+        self.shift_pressed = False
+        self.control_pressed = False
         self.set_ui_enabled(False)
-        self.restore_btn.setEnabled(False)
+        self.update_texts()
         self.resize(320, 200)
 
-    def set_ui_enabled(self, val):
-        self.orient_grp.setEnabled(bool(val))
-        self.transf_grp.setEnabled(bool(val))
+    def set_ui_enabled(self, val: bool) -> None:
+        self.align_grp.setEnabled(bool(val))
+        self.rotate_grp.setEnabled(bool(val))
         self.set_origin_grp.setEnabled(bool(val))
         self.finalize_grp.setEnabled(bool(val))
-        self.reset_btn.setEnabled(not self.orient.freezed if self.orient else False)
 
-    def set_object(self, obj=None):
+    def set_object(self, obj: nt.Transform = None) -> None:
+        self.reset_object()
+        if self.shift_pressed:
+            return
         if not obj:
             sel = selected()
             if not sel:
@@ -90,37 +128,48 @@ class ObjectOrientDialog(QWidget, dialog_UI.Ui_ObjectOrient):
         self.orient = orient.ObjOrient(obj)
         self.obj_name_lb.setText(obj.name())
         self.set_ui_enabled(True)
-        self.restore_btn.setEnabled(False)
-        self.freeze_btn.setEnabled(True)
 
-    def on_align(self, main_axis=None):
+    def reset_object(self) -> None:
+        self.orient = None
+        self.set_ui_enabled(False)
+        self.obj_name_lb.setText('Object Not Set')
+
+    def on_align_pressed(self, main_axis: str = None):
         if not self.orient:
+            PopupError('Object not set')
             return
-        modifiers = QApplication.keyboardModifiers()
 
-        if modifiers == Qt.ShiftModifier:
-            if main_axis:
-                main_axis = '-' + main_axis
         if self.orient.preview_axis_exists():
             self.orient.clear_preview_axis()
-        if not modifiers == Qt.ControlModifier:
+        if not self.control_pressed:
             preview = self.preview_cbx.isChecked()
             if preview:
-                with UndoChunk():
-                    self.orient.show_axis(main_axis=main_axis)
+                try:
+                    with UndoChunk():
+                        self.orient.show_axis(main_axis=main_axis, reverse_axis=self.shift_pressed)
+                except Exception as e:
+                    PopupError(str(e))
+                    traceback.print_exc()
             else:
-                with UndoChunk():
-                    self.orient.orient(main_axis)
+                try:
+                    with UndoChunk():
+                        self.orient.orient(main_axis, reverse_axis=self.shift_pressed)
+                except Exception as e:
+                    PopupError(str(e))
+                    traceback.print_exc()
 
-    def on_rotate(self, axis, value):
-        modifiers = QApplication.keyboardModifiers()
-        if modifiers == Qt.ControlModifier:
-            value *= 2
+    def on_rotate_pressed(self, axis: str, mult: float):
+        value = 90
+        if self.shift_pressed:
+            value = 180
+        elif self.control_pressed:
+            value = 45
+        value *= mult
         if not self.orient:
             return
         self.orient.rotate_object(axis, value)
 
-    def rotate_to_world_axis(self, axis):
+    def rotate_to_world_axis(self, axis: str) -> None:
         if not self.orient:
             return
         try:
@@ -129,13 +178,13 @@ class ObjectOrientDialog(QWidget, dialog_UI.Ui_ObjectOrient):
             traceback.print_exc()
             PopupError(str(e))
 
-    def rotate_to_world_plane(self, axis1, axis2):
+    def rotate_to_world_plane(self, axis1: str, axis2: str) -> None:
         if not self.orient:
             return
         rotation_axis = None
-        if QApplication.keyboardModifiers() == Qt.ShiftModifier:
+        if self.shift_pressed:
             rotation_axis = axis1
-        elif QApplication.keyboardModifiers() == Qt.ControlModifier:
+        elif self.control_pressed:
             rotation_axis = axis2
         try:
             self.orient.rotate_to_world_plane(axis1, axis2, rotation_axis)
@@ -143,16 +192,16 @@ class ObjectOrientDialog(QWidget, dialog_UI.Ui_ObjectOrient):
             PopupError(str(e))
             traceback.print_exc()
 
-    def on_drop(self):
+    def on_origin_to_down_pressed(self) -> None:
         if not self.orient:
             return
         try:
-            self.orient.drop_down(to_center=QApplication.keyboardModifiers() == Qt.ShiftModifier)
+            self.orient.drop_down(down_only=self.shift_pressed)
         except Exception as e:
             PopupError(str(e))
             traceback.print_exc()
 
-    def on_origin(self):
+    def on_origin_to_y_pressed(self) -> None:
         if not self.orient:
             return
         try:
@@ -161,7 +210,7 @@ class ObjectOrientDialog(QWidget, dialog_UI.Ui_ObjectOrient):
             PopupError(str(e))
             traceback.print_exc()
 
-    def on_base_to_center(self):
+    def on_origin_to_center_pressed(self) -> None:
         if not self.orient:
             return
         try:
@@ -170,7 +219,7 @@ class ObjectOrientDialog(QWidget, dialog_UI.Ui_ObjectOrient):
             PopupError(str(e))
             traceback.print_exc()
 
-    def on_base_to_selected(self):
+    def on_origin_to_selected_pressed(self) -> None:
         if not self.orient:
             return
         try:
@@ -179,31 +228,27 @@ class ObjectOrientDialog(QWidget, dialog_UI.Ui_ObjectOrient):
             PopupError(str(e))
             traceback.print_exc()
 
-    def on_freeze(self):
+    def on_freeze_pressed(self) -> None:
         if self.orient:
             try:
                 self.orient.freeze_transformations()
-                self.restore_btn.setEnabled(True)
-                self.reset_btn.setEnabled(False)
             except Exception as e:
                 PopupError(str(e))
                 traceback.print_exc()
 
-    def on_reset(self):
+    def on_reset_pressed(self) -> None:
         if not self.orient:
             return
-        if self.orient.freezed:
-            PopupError('Object already Freezed')
+        if self.orient.frozen:
+            PopupError('Object already Frozen')
             return
         try:
             self.orient.reset()
         except Exception as e:
             PopupError(str(e))
             traceback.print_exc()
-        self.restore_btn.setEnabled(False)
-        self.freeze_btn.setEnabled(True)
 
-    def on_restore(self):
+    def on_restore_pressed(self) -> None:
         if not self.orient:
             return
         try:
@@ -211,4 +256,44 @@ class ObjectOrientDialog(QWidget, dialog_UI.Ui_ObjectOrient):
         except Exception as e:
             PopupError(str(e))
             traceback.print_exc()
-        self.freeze_btn.setEnabled(False)
+
+    def update_texts(self) -> None:
+        for w in self._alter_widgets:
+            btn_text = w.property('btn_text')
+            if not btn_text:
+                continue
+            if self.control_pressed:
+                w.setText(btn_text.get('ctrl', btn_text.get('default', '?')))
+            elif self.shift_pressed:
+                w.setText(btn_text.get('shift', btn_text.get('default', '?')))
+            else:
+                w.setText(btn_text.get('default', '?'))
+
+    def keyPressEvent(self, event):
+        if event.key() == Qt.Key_Shift:
+            self.shift_pressed = True
+            self.control_pressed = False
+        elif event.key() == Qt.Key_Control:
+            self.shift_pressed = False
+            self.control_pressed = True
+        else:
+            self.control_pressed = False
+            self.shift_pressed = False
+        self.update_texts()
+        return super().keyPressEvent(event)
+
+    def keyReleaseEvent(self, event):
+        self.control_pressed = False
+        self.shift_pressed = False
+        self.update_texts()
+        return super().keyReleaseEvent(event)
+
+    def leaveEvent(self, event):
+        self.control_pressed = False
+        self.shift_pressed = False
+        self.update_texts()
+        return super().leaveEvent(event)
+
+    def enterEvent(self, event):
+        self.activateWindow()
+        super().enterEvent(event)

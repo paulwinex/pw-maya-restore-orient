@@ -11,22 +11,30 @@
 from PySide6.QtCore import (QCoreApplication, QDate, QDateTime, QLocale,
     QMetaObject, QObject, QPoint, QRect,
     QSize, QTime, QUrl, Qt)
-from PySide6.QtGui import (QBrush, QColor, QConicalGradient, QCursor,
-    QFont, QFontDatabase, QGradient, QIcon,
-    QImage, QKeySequence, QLinearGradient, QPainter,
-    QPalette, QPixmap, QRadialGradient, QTransform)
-from PySide6.QtWidgets import (QApplication, QCheckBox, QFrame, QGridLayout,
-    QGroupBox, QHBoxLayout, QLabel, QPushButton,
-    QSizePolicy, QVBoxLayout, QWidget)
+from PySide6.QtGui import (QAction, QBrush, QColor, QConicalGradient,
+    QCursor, QFont, QFontDatabase, QGradient,
+    QIcon, QImage, QKeySequence, QLinearGradient,
+    QPainter, QPalette, QPixmap, QRadialGradient,
+    QTransform)
+from PySide6.QtWidgets import (QApplication, QCheckBox, QGridLayout, QGroupBox,
+    QHBoxLayout, QLabel, QMainWindow, QMenu,
+    QMenuBar, QPushButton, QSizePolicy, QVBoxLayout,
+    QWidget)
 
 class Ui_ObjectOrient(object):
     def setupUi(self, ObjectOrient):
         if not ObjectOrient.objectName():
             ObjectOrient.setObjectName(u"ObjectOrient")
-        ObjectOrient.resize(320, 747)
-        self.verticalLayout_3 = QVBoxLayout(ObjectOrient)
+        ObjectOrient.resize(358, 792)
+        self.clise_act = QAction(ObjectOrient)
+        self.clise_act.setObjectName(u"clise_act")
+        self.manual_act = QAction(ObjectOrient)
+        self.manual_act.setObjectName(u"manual_act")
+        self.centralwidget = QWidget(ObjectOrient)
+        self.centralwidget.setObjectName(u"centralwidget")
+        self.verticalLayout_3 = QVBoxLayout(self.centralwidget)
         self.verticalLayout_3.setObjectName(u"verticalLayout_3")
-        self.obj_btp = QGroupBox(ObjectOrient)
+        self.obj_btp = QGroupBox(self.centralwidget)
         self.obj_btp.setObjectName(u"obj_btp")
         self.verticalLayout_2 = QVBoxLayout(self.obj_btp)
         self.verticalLayout_2.setObjectName(u"verticalLayout_2")
@@ -47,67 +55,41 @@ class Ui_ObjectOrient(object):
 
         self.verticalLayout_3.addWidget(self.obj_btp)
 
-        self.orient_grp = QGroupBox(ObjectOrient)
-        self.orient_grp.setObjectName(u"orient_grp")
-        self.verticalLayout = QVBoxLayout(self.orient_grp)
+        self.align_grp = QGroupBox(self.centralwidget)
+        self.align_grp.setObjectName(u"align_grp")
+        self.verticalLayout = QVBoxLayout(self.align_grp)
         self.verticalLayout.setObjectName(u"verticalLayout")
-        self.horizontalLayout_2 = QHBoxLayout()
-        self.horizontalLayout_2.setObjectName(u"horizontalLayout_2")
-        self.align_btn = QPushButton(self.orient_grp)
+        self.align_btn = QPushButton(self.align_grp)
         self.align_btn.setObjectName(u"align_btn")
         self.align_btn.setMinimumSize(QSize(0, 40))
         font1 = QFont()
         font1.setPointSize(14)
         self.align_btn.setFont(font1)
 
-        self.horizontalLayout_2.addWidget(self.align_btn)
-
-
-        self.verticalLayout.addLayout(self.horizontalLayout_2)
-
-        self.preview_cbx = QCheckBox(self.orient_grp)
-        self.preview_cbx.setObjectName(u"preview_cbx")
-
-        self.verticalLayout.addWidget(self.preview_cbx)
-
-        self.line = QFrame(self.orient_grp)
-        self.line.setObjectName(u"line")
-        self.line.setFrameShape(QFrame.Shape.HLine)
-        self.line.setFrameShadow(QFrame.Shadow.Sunken)
-
-        self.verticalLayout.addWidget(self.line)
-
-        self.label = QLabel(self.orient_grp)
-        self.label.setObjectName(u"label")
-        self.label.setAlignment(Qt.AlignCenter)
-
-        self.verticalLayout.addWidget(self.label)
-
-        self.label_2 = QLabel(self.orient_grp)
-        self.label_2.setObjectName(u"label_2")
-        self.label_2.setAlignment(Qt.AlignCenter)
-
-        self.verticalLayout.addWidget(self.label_2)
+        self.verticalLayout.addWidget(self.align_btn)
 
         self.horizontalLayout = QHBoxLayout()
         self.horizontalLayout.setObjectName(u"horizontalLayout")
-        self.axis_x_btn = QPushButton(self.orient_grp)
+        self.axis_x_btn = QPushButton(self.align_grp)
         self.axis_x_btn.setObjectName(u"axis_x_btn")
         self.axis_x_btn.setMinimumSize(QSize(0, 40))
+        self.axis_x_btn.setMaximumSize(QSize(1000, 16777215))
         self.axis_x_btn.setFont(font1)
 
         self.horizontalLayout.addWidget(self.axis_x_btn)
 
-        self.axis_y_btn = QPushButton(self.orient_grp)
+        self.axis_y_btn = QPushButton(self.align_grp)
         self.axis_y_btn.setObjectName(u"axis_y_btn")
         self.axis_y_btn.setMinimumSize(QSize(0, 40))
+        self.axis_y_btn.setMaximumSize(QSize(1000, 16777215))
         self.axis_y_btn.setFont(font1)
 
         self.horizontalLayout.addWidget(self.axis_y_btn)
 
-        self.axis_z_btn = QPushButton(self.orient_grp)
+        self.axis_z_btn = QPushButton(self.align_grp)
         self.axis_z_btn.setObjectName(u"axis_z_btn")
         self.axis_z_btn.setMinimumSize(QSize(0, 40))
+        self.axis_z_btn.setMaximumSize(QSize(1000, 16777215))
         self.axis_z_btn.setFont(font1)
 
         self.horizontalLayout.addWidget(self.axis_z_btn)
@@ -115,206 +97,152 @@ class Ui_ObjectOrient(object):
 
         self.verticalLayout.addLayout(self.horizontalLayout)
 
+        self.preview_cbx = QCheckBox(self.align_grp)
+        self.preview_cbx.setObjectName(u"preview_cbx")
 
-        self.verticalLayout_3.addWidget(self.orient_grp)
+        self.verticalLayout.addWidget(self.preview_cbx)
 
-        self.transf_grp = QGroupBox(ObjectOrient)
-        self.transf_grp.setObjectName(u"transf_grp")
-        self.gridLayout = QGridLayout(self.transf_grp)
+
+        self.verticalLayout_3.addWidget(self.align_grp)
+
+        self.rotate_grp = QGroupBox(self.centralwidget)
+        self.rotate_grp.setObjectName(u"rotate_grp")
+        self.gridLayout = QGridLayout(self.rotate_grp)
         self.gridLayout.setObjectName(u"gridLayout")
-        self.z_sub180_btn = QPushButton(self.transf_grp)
-        self.z_sub180_btn.setObjectName(u"z_sub180_btn")
-        self.z_sub180_btn.setMinimumSize(QSize(40, 25))
-        self.z_sub180_btn.setMaximumSize(QSize(55, 25))
-        font2 = QFont()
-        font2.setPointSize(10)
-        self.z_sub180_btn.setFont(font2)
-
-        self.gridLayout.addWidget(self.z_sub180_btn, 2, 6, 1, 1)
-
-        self.z_add90_btn = QPushButton(self.transf_grp)
-        self.z_add90_btn.setObjectName(u"z_add90_btn")
-        self.z_add90_btn.setMinimumSize(QSize(40, 25))
-        self.z_add90_btn.setMaximumSize(QSize(55, 25))
-        self.z_add90_btn.setFont(font)
-
-        self.gridLayout.addWidget(self.z_add90_btn, 2, 1, 1, 1)
-
-        self.z_sub90_btn = QPushButton(self.transf_grp)
-        self.z_sub90_btn.setObjectName(u"z_sub90_btn")
-        self.z_sub90_btn.setMinimumSize(QSize(40, 25))
-        self.z_sub90_btn.setMaximumSize(QSize(55, 25))
-        self.z_sub90_btn.setFont(font)
-
-        self.gridLayout.addWidget(self.z_sub90_btn, 2, 5, 1, 1)
-
-        self.z_add180_btn = QPushButton(self.transf_grp)
-        self.z_add180_btn.setObjectName(u"z_add180_btn")
-        self.z_add180_btn.setMinimumSize(QSize(40, 25))
-        self.z_add180_btn.setMaximumSize(QSize(55, 25))
-        self.z_add180_btn.setFont(font2)
-
-        self.gridLayout.addWidget(self.z_add180_btn, 2, 0, 1, 1)
-
-        self.y_sub90_btn = QPushButton(self.transf_grp)
-        self.y_sub90_btn.setObjectName(u"y_sub90_btn")
-        self.y_sub90_btn.setMinimumSize(QSize(40, 25))
-        self.y_sub90_btn.setMaximumSize(QSize(55, 25))
-        self.y_sub90_btn.setFont(font)
-
-        self.gridLayout.addWidget(self.y_sub90_btn, 1, 5, 1, 1)
-
-        self.y_sub180_btn = QPushButton(self.transf_grp)
-        self.y_sub180_btn.setObjectName(u"y_sub180_btn")
-        self.y_sub180_btn.setMinimumSize(QSize(40, 25))
-        self.y_sub180_btn.setMaximumSize(QSize(55, 25))
-        self.y_sub180_btn.setFont(font2)
-
-        self.gridLayout.addWidget(self.y_sub180_btn, 1, 6, 1, 1)
-
-        self.y_add180_btn = QPushButton(self.transf_grp)
-        self.y_add180_btn.setObjectName(u"y_add180_btn")
-        self.y_add180_btn.setMinimumSize(QSize(40, 25))
-        self.y_add180_btn.setMaximumSize(QSize(55, 25))
-        self.y_add180_btn.setFont(font2)
-
-        self.gridLayout.addWidget(self.y_add180_btn, 1, 0, 1, 1)
-
-        self.x_add180_btn = QPushButton(self.transf_grp)
-        self.x_add180_btn.setObjectName(u"x_add180_btn")
-        self.x_add180_btn.setMinimumSize(QSize(40, 25))
-        self.x_add180_btn.setMaximumSize(QSize(55, 25))
-        self.x_add180_btn.setFont(font2)
-
-        self.gridLayout.addWidget(self.x_add180_btn, 0, 0, 1, 1)
-
-        self.y_add90_btn = QPushButton(self.transf_grp)
-        self.y_add90_btn.setObjectName(u"y_add90_btn")
-        self.y_add90_btn.setMinimumSize(QSize(40, 25))
-        self.y_add90_btn.setMaximumSize(QSize(55, 25))
-        self.y_add90_btn.setFont(font)
-
-        self.gridLayout.addWidget(self.y_add90_btn, 1, 1, 1, 1)
-
-        self.rotate_to_y_btn = QPushButton(self.transf_grp)
-        self.rotate_to_y_btn.setObjectName(u"rotate_to_y_btn")
-        self.rotate_to_y_btn.setMaximumSize(QSize(32, 28))
-        self.rotate_to_y_btn.setFont(font)
-
-        self.gridLayout.addWidget(self.rotate_to_y_btn, 1, 3, 1, 1)
-
-        self.x_sub90_btn = QPushButton(self.transf_grp)
-        self.x_sub90_btn.setObjectName(u"x_sub90_btn")
-        self.x_sub90_btn.setMinimumSize(QSize(40, 25))
-        self.x_sub90_btn.setMaximumSize(QSize(55, 25))
-        self.x_sub90_btn.setFont(font)
-
-        self.gridLayout.addWidget(self.x_sub90_btn, 0, 5, 1, 1)
-
-        self.x_add90_btn = QPushButton(self.transf_grp)
-        self.x_add90_btn.setObjectName(u"x_add90_btn")
-        self.x_add90_btn.setMinimumSize(QSize(40, 25))
-        self.x_add90_btn.setMaximumSize(QSize(55, 25))
-        self.x_add90_btn.setFont(font)
-
-        self.gridLayout.addWidget(self.x_add90_btn, 0, 1, 1, 1)
-
-        self.rotate_to_yz_btn = QPushButton(self.transf_grp)
-        self.rotate_to_yz_btn.setObjectName(u"rotate_to_yz_btn")
-        self.rotate_to_yz_btn.setMaximumSize(QSize(32, 28))
-        self.rotate_to_yz_btn.setFont(font)
-
-        self.gridLayout.addWidget(self.rotate_to_yz_btn, 1, 2, 1, 1)
-
-        self.x_sub180_btn = QPushButton(self.transf_grp)
-        self.x_sub180_btn.setObjectName(u"x_sub180_btn")
-        self.x_sub180_btn.setMinimumSize(QSize(40, 25))
-        self.x_sub180_btn.setMaximumSize(QSize(55, 25))
-        self.x_sub180_btn.setFont(font2)
-
-        self.gridLayout.addWidget(self.x_sub180_btn, 0, 6, 1, 1)
-
-        self.rotate_to_xz_btn = QPushButton(self.transf_grp)
-        self.rotate_to_xz_btn.setObjectName(u"rotate_to_xz_btn")
-        self.rotate_to_xz_btn.setMaximumSize(QSize(32, 28))
-        self.rotate_to_xz_btn.setFont(font)
-
-        self.gridLayout.addWidget(self.rotate_to_xz_btn, 0, 2, 1, 1)
-
-        self.rotate_to_x_btn = QPushButton(self.transf_grp)
+        self.rotate_to_x_btn = QPushButton(self.rotate_grp)
         self.rotate_to_x_btn.setObjectName(u"rotate_to_x_btn")
-        self.rotate_to_x_btn.setMaximumSize(QSize(32, 28))
-        self.rotate_to_x_btn.setFont(font)
 
-        self.gridLayout.addWidget(self.rotate_to_x_btn, 0, 3, 1, 1)
+        self.gridLayout.addWidget(self.rotate_to_x_btn, 0, 0, 1, 2)
 
-        self.rotate_to_zy_btn = QPushButton(self.transf_grp)
-        self.rotate_to_zy_btn.setObjectName(u"rotate_to_zy_btn")
-        self.rotate_to_zy_btn.setMaximumSize(QSize(32, 28))
-        self.rotate_to_zy_btn.setFont(font)
+        self.rotate_to_y_btn = QPushButton(self.rotate_grp)
+        self.rotate_to_y_btn.setObjectName(u"rotate_to_y_btn")
 
-        self.gridLayout.addWidget(self.rotate_to_zy_btn, 2, 2, 1, 1)
+        self.gridLayout.addWidget(self.rotate_to_y_btn, 0, 2, 1, 2)
 
-        self.rotate_to_z_btn = QPushButton(self.transf_grp)
+        self.rotate_to_z_btn = QPushButton(self.rotate_grp)
         self.rotate_to_z_btn.setObjectName(u"rotate_to_z_btn")
-        self.rotate_to_z_btn.setMaximumSize(QSize(32, 28))
-        self.rotate_to_z_btn.setFont(font)
 
-        self.gridLayout.addWidget(self.rotate_to_z_btn, 2, 3, 1, 1)
+        self.gridLayout.addWidget(self.rotate_to_z_btn, 0, 4, 1, 2)
 
-        self.rotate_to_xy_btn = QPushButton(self.transf_grp)
+        self.x_rot_add_btn = QPushButton(self.rotate_grp)
+        self.x_rot_add_btn.setObjectName(u"x_rot_add_btn")
+        self.x_rot_add_btn.setMaximumSize(QSize(50, 16777215))
+
+        self.gridLayout.addWidget(self.x_rot_add_btn, 3, 0, 1, 1)
+
+        self.x_rot_sub_btn = QPushButton(self.rotate_grp)
+        self.x_rot_sub_btn.setObjectName(u"x_rot_sub_btn")
+        self.x_rot_sub_btn.setMaximumSize(QSize(50, 16777215))
+
+        self.gridLayout.addWidget(self.x_rot_sub_btn, 3, 1, 1, 1)
+
+        self.y_rot_add_btn = QPushButton(self.rotate_grp)
+        self.y_rot_add_btn.setObjectName(u"y_rot_add_btn")
+        self.y_rot_add_btn.setMaximumSize(QSize(50, 16777215))
+
+        self.gridLayout.addWidget(self.y_rot_add_btn, 3, 2, 1, 1)
+
+        self.y_rot_sub_btn = QPushButton(self.rotate_grp)
+        self.y_rot_sub_btn.setObjectName(u"y_rot_sub_btn")
+        self.y_rot_sub_btn.setMaximumSize(QSize(50, 16777215))
+
+        self.gridLayout.addWidget(self.y_rot_sub_btn, 3, 3, 1, 1)
+
+        self.z_rot_add_btn = QPushButton(self.rotate_grp)
+        self.z_rot_add_btn.setObjectName(u"z_rot_add_btn")
+        self.z_rot_add_btn.setMaximumSize(QSize(50, 16777215))
+
+        self.gridLayout.addWidget(self.z_rot_add_btn, 3, 4, 1, 1)
+
+        self.z_rot_sub_btn = QPushButton(self.rotate_grp)
+        self.z_rot_sub_btn.setObjectName(u"z_rot_sub_btn")
+        self.z_rot_sub_btn.setMaximumSize(QSize(50, 16777215))
+
+        self.gridLayout.addWidget(self.z_rot_sub_btn, 3, 5, 1, 1)
+
+        self.rotate_to_xz_btn = QPushButton(self.rotate_grp)
+        self.rotate_to_xz_btn.setObjectName(u"rotate_to_xz_btn")
+        sizePolicy = QSizePolicy(QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(self.rotate_to_xz_btn.sizePolicy().hasHeightForWidth())
+        self.rotate_to_xz_btn.setSizePolicy(sizePolicy)
+        self.rotate_to_xz_btn.setMaximumSize(QSize(50, 16777215))
+
+        self.gridLayout.addWidget(self.rotate_to_xz_btn, 2, 0, 1, 1)
+
+        self.rotate_to_xy_btn = QPushButton(self.rotate_grp)
         self.rotate_to_xy_btn.setObjectName(u"rotate_to_xy_btn")
-        self.rotate_to_xy_btn.setMaximumSize(QSize(32, 28))
-        self.rotate_to_xy_btn.setFont(font)
+        sizePolicy.setHeightForWidth(self.rotate_to_xy_btn.sizePolicy().hasHeightForWidth())
+        self.rotate_to_xy_btn.setSizePolicy(sizePolicy)
+        self.rotate_to_xy_btn.setMaximumSize(QSize(50, 16777215))
 
-        self.gridLayout.addWidget(self.rotate_to_xy_btn, 0, 4, 1, 1)
+        self.gridLayout.addWidget(self.rotate_to_xy_btn, 2, 1, 1, 1)
 
-        self.rotate_to_yx_btn = QPushButton(self.transf_grp)
+        self.rotate_to_yz_btn = QPushButton(self.rotate_grp)
+        self.rotate_to_yz_btn.setObjectName(u"rotate_to_yz_btn")
+        sizePolicy.setHeightForWidth(self.rotate_to_yz_btn.sizePolicy().hasHeightForWidth())
+        self.rotate_to_yz_btn.setSizePolicy(sizePolicy)
+        self.rotate_to_yz_btn.setMaximumSize(QSize(50, 16777215))
+
+        self.gridLayout.addWidget(self.rotate_to_yz_btn, 2, 2, 1, 1)
+
+        self.rotate_to_yx_btn = QPushButton(self.rotate_grp)
         self.rotate_to_yx_btn.setObjectName(u"rotate_to_yx_btn")
-        self.rotate_to_yx_btn.setMaximumSize(QSize(32, 28))
-        self.rotate_to_yx_btn.setFont(font)
+        sizePolicy.setHeightForWidth(self.rotate_to_yx_btn.sizePolicy().hasHeightForWidth())
+        self.rotate_to_yx_btn.setSizePolicy(sizePolicy)
+        self.rotate_to_yx_btn.setMaximumSize(QSize(50, 16777215))
 
-        self.gridLayout.addWidget(self.rotate_to_yx_btn, 1, 4, 1, 1)
+        self.gridLayout.addWidget(self.rotate_to_yx_btn, 2, 3, 1, 1)
 
-        self.rotate_to_zx_btn = QPushButton(self.transf_grp)
+        self.rotate_to_zx_btn = QPushButton(self.rotate_grp)
         self.rotate_to_zx_btn.setObjectName(u"rotate_to_zx_btn")
-        self.rotate_to_zx_btn.setMaximumSize(QSize(32, 28))
-        self.rotate_to_zx_btn.setFont(font)
+        sizePolicy.setHeightForWidth(self.rotate_to_zx_btn.sizePolicy().hasHeightForWidth())
+        self.rotate_to_zx_btn.setSizePolicy(sizePolicy)
+        self.rotate_to_zx_btn.setMaximumSize(QSize(50, 16777215))
 
         self.gridLayout.addWidget(self.rotate_to_zx_btn, 2, 4, 1, 1)
 
-        self.gridLayout.setColumnStretch(0, 1)
-        self.gridLayout.setColumnStretch(1, 1)
-        self.gridLayout.setColumnStretch(3, 1)
+        self.rotate_to_zy_btn = QPushButton(self.rotate_grp)
+        self.rotate_to_zy_btn.setObjectName(u"rotate_to_zy_btn")
+        sizePolicy.setHeightForWidth(self.rotate_to_zy_btn.sizePolicy().hasHeightForWidth())
+        self.rotate_to_zy_btn.setSizePolicy(sizePolicy)
+        self.rotate_to_zy_btn.setMaximumSize(QSize(50, 16777215))
 
-        self.verticalLayout_3.addWidget(self.transf_grp)
+        self.gridLayout.addWidget(self.rotate_to_zy_btn, 2, 5, 1, 1)
 
-        self.set_origin_grp = QGroupBox(ObjectOrient)
+
+        self.verticalLayout_3.addWidget(self.rotate_grp)
+
+        self.set_origin_grp = QGroupBox(self.centralwidget)
         self.set_origin_grp.setObjectName(u"set_origin_grp")
         self.gridLayout_3 = QGridLayout(self.set_origin_grp)
         self.gridLayout_3.setObjectName(u"gridLayout_3")
-        self.to_center_btn = QPushButton(self.set_origin_grp)
-        self.to_center_btn.setObjectName(u"to_center_btn")
-        self.to_center_btn.setFont(font)
+        self.set_origin_to_base_btn = QPushButton(self.set_origin_grp)
+        self.set_origin_to_base_btn.setObjectName(u"set_origin_to_base_btn")
+        self.set_origin_to_base_btn.setMaximumSize(QSize(1000, 16777215))
+        self.set_origin_to_base_btn.setFont(font)
 
-        self.gridLayout_3.addWidget(self.to_center_btn, 0, 1, 1, 1)
+        self.gridLayout_3.addWidget(self.set_origin_to_base_btn, 0, 0, 1, 1)
 
-        self.drop_btn = QPushButton(self.set_origin_grp)
-        self.drop_btn.setObjectName(u"drop_btn")
-        self.drop_btn.setFont(font)
+        self.set_origin_to_selected_btn = QPushButton(self.set_origin_grp)
+        self.set_origin_to_selected_btn.setObjectName(u"set_origin_to_selected_btn")
+        self.set_origin_to_selected_btn.setMaximumSize(QSize(1000, 16777215))
+        self.set_origin_to_selected_btn.setFont(font)
 
-        self.gridLayout_3.addWidget(self.drop_btn, 0, 0, 1, 1)
+        self.gridLayout_3.addWidget(self.set_origin_to_selected_btn, 0, 2, 1, 1)
 
-        self.to_selected_btn = QPushButton(self.set_origin_grp)
-        self.to_selected_btn.setObjectName(u"to_selected_btn")
-        self.to_selected_btn.setFont(font)
+        self.set_origin_to_center_btn = QPushButton(self.set_origin_grp)
+        self.set_origin_to_center_btn.setObjectName(u"set_origin_to_center_btn")
+        self.set_origin_to_center_btn.setMaximumSize(QSize(1000, 16777215))
+        self.set_origin_to_center_btn.setFont(font)
 
-        self.gridLayout_3.addWidget(self.to_selected_btn, 0, 2, 1, 1)
+        self.gridLayout_3.addWidget(self.set_origin_to_center_btn, 0, 1, 1, 1)
 
 
         self.verticalLayout_3.addWidget(self.set_origin_grp)
 
-        self.finalize_grp = QGroupBox(ObjectOrient)
+        self.finalize_grp = QGroupBox(self.centralwidget)
         self.finalize_grp.setObjectName(u"finalize_grp")
         self.gridLayout_2 = QGridLayout(self.finalize_grp)
         self.gridLayout_2.setObjectName(u"gridLayout_2")
@@ -342,6 +270,37 @@ class Ui_ObjectOrient(object):
 
         self.verticalLayout_3.addWidget(self.finalize_grp)
 
+        self.horizontalLayout_2 = QHBoxLayout()
+        self.horizontalLayout_2.setObjectName(u"horizontalLayout_2")
+        self.help_label_lb = QLabel(self.centralwidget)
+        self.help_label_lb.setObjectName(u"help_label_lb")
+        self.help_label_lb.setAlignment(Qt.AlignCenter)
+
+        self.horizontalLayout_2.addWidget(self.help_label_lb)
+
+        self.help_btn = QPushButton(self.centralwidget)
+        self.help_btn.setObjectName(u"help_btn")
+        self.help_btn.setMaximumSize(QSize(32, 32))
+
+        self.horizontalLayout_2.addWidget(self.help_btn)
+
+
+        self.verticalLayout_3.addLayout(self.horizontalLayout_2)
+
+        ObjectOrient.setCentralWidget(self.centralwidget)
+        self.menubar = QMenuBar(ObjectOrient)
+        self.menubar.setObjectName(u"menubar")
+        self.menubar.setGeometry(QRect(0, 0, 358, 34))
+        self.menuFile = QMenu(self.menubar)
+        self.menuFile.setObjectName(u"menuFile")
+        self.menuHelp = QMenu(self.menubar)
+        self.menuHelp.setObjectName(u"menuHelp")
+        ObjectOrient.setMenuBar(self.menubar)
+
+        self.menubar.addAction(self.menuFile.menuAction())
+        self.menubar.addAction(self.menuHelp.menuAction())
+        self.menuFile.addAction(self.clise_act)
+        self.menuHelp.addAction(self.manual_act)
 
         self.retranslateUi(ObjectOrient)
 
@@ -350,55 +309,56 @@ class Ui_ObjectOrient(object):
 
     def retranslateUi(self, ObjectOrient):
         ObjectOrient.setWindowTitle(QCoreApplication.translate("ObjectOrient", u"Object Orient", None))
-        self.obj_btp.setTitle(QCoreApplication.translate("ObjectOrient", u"Object", None))
+        self.clise_act.setText(QCoreApplication.translate("ObjectOrient", u"Close", None))
+        self.manual_act.setText(QCoreApplication.translate("ObjectOrient", u"Manual", None))
+        self.obj_btp.setTitle(QCoreApplication.translate("ObjectOrient", u"Crrent Object", None))
         self.set_obj_btn.setText(QCoreApplication.translate("ObjectOrient", u"Set Object", None))
         self.obj_name_lb.setText(QCoreApplication.translate("ObjectOrient", u"Object Not Set", None))
-        self.orient_grp.setTitle(QCoreApplication.translate("ObjectOrient", u"Orient", None))
-        self.align_btn.setText(QCoreApplication.translate("ObjectOrient", u"Align Selected", None))
-        self.preview_cbx.setText(QCoreApplication.translate("ObjectOrient", u"Preview Mode", None))
-        self.label.setText(QCoreApplication.translate("ObjectOrient", u"Align Selected To Asxis", None))
-        self.label_2.setText(QCoreApplication.translate("ObjectOrient", u"<html><head/><body><p><span style=\" font-style:italic;\">Hold Shift To Reverse Direction</span></p></body></html>", None))
+        self.align_grp.setTitle(QCoreApplication.translate("ObjectOrient", u"Align Selected ", None))
+        self.align_btn.setText(QCoreApplication.translate("ObjectOrient", u"Quick Align ", None))
         self.axis_x_btn.setText(QCoreApplication.translate("ObjectOrient", u"X", None))
         self.axis_y_btn.setText(QCoreApplication.translate("ObjectOrient", u"Y", None))
         self.axis_z_btn.setText(QCoreApplication.translate("ObjectOrient", u"Z", None))
-        self.transf_grp.setTitle(QCoreApplication.translate("ObjectOrient", u"Rotate Object", None))
-        self.z_sub180_btn.setText(QCoreApplication.translate("ObjectOrient", u"-180", None))
-        self.z_add90_btn.setText(QCoreApplication.translate("ObjectOrient", u"+90", None))
-        self.z_sub90_btn.setText(QCoreApplication.translate("ObjectOrient", u"-90", None))
-        self.z_add180_btn.setText(QCoreApplication.translate("ObjectOrient", u"+180", None))
-        self.y_sub90_btn.setText(QCoreApplication.translate("ObjectOrient", u"-90", None))
-        self.y_sub180_btn.setText(QCoreApplication.translate("ObjectOrient", u"-180", None))
-        self.y_add180_btn.setText(QCoreApplication.translate("ObjectOrient", u"+180", None))
-        self.x_add180_btn.setText(QCoreApplication.translate("ObjectOrient", u"+180", None))
-        self.y_add90_btn.setText(QCoreApplication.translate("ObjectOrient", u"+90", None))
-        self.rotate_to_y_btn.setText(QCoreApplication.translate("ObjectOrient", u"Y", None))
-        self.x_sub90_btn.setText(QCoreApplication.translate("ObjectOrient", u"-90", None))
-        self.x_add90_btn.setText(QCoreApplication.translate("ObjectOrient", u"+90", None))
-        self.rotate_to_yz_btn.setText(QCoreApplication.translate("ObjectOrient", u"yz", None))
-        self.x_sub180_btn.setText(QCoreApplication.translate("ObjectOrient", u"-180", None))
-        self.rotate_to_xz_btn.setText(QCoreApplication.translate("ObjectOrient", u"xz", None))
+#if QT_CONFIG(tooltip)
+        self.preview_cbx.setToolTip(QCoreApplication.translate("ObjectOrient", u"<html><head/><body><p>Create axes of the basis and do not actually rotate</p></body></html>", None))
+#endif // QT_CONFIG(tooltip)
+        self.preview_cbx.setText(QCoreApplication.translate("ObjectOrient", u"Preview Mode", None))
+        self.rotate_grp.setTitle(QCoreApplication.translate("ObjectOrient", u"Rotate Selected To", None))
         self.rotate_to_x_btn.setText(QCoreApplication.translate("ObjectOrient", u"X", None))
-        self.rotate_to_zy_btn.setText(QCoreApplication.translate("ObjectOrient", u"zy", None))
+        self.rotate_to_y_btn.setText(QCoreApplication.translate("ObjectOrient", u"Y", None))
         self.rotate_to_z_btn.setText(QCoreApplication.translate("ObjectOrient", u"Z", None))
-        self.rotate_to_xy_btn.setText(QCoreApplication.translate("ObjectOrient", u"xy", None))
-        self.rotate_to_yx_btn.setText(QCoreApplication.translate("ObjectOrient", u"yx", None))
-        self.rotate_to_zx_btn.setText(QCoreApplication.translate("ObjectOrient", u"zx", None))
+        self.x_rot_add_btn.setText(QCoreApplication.translate("ObjectOrient", u"+90", None))
+        self.x_rot_sub_btn.setText(QCoreApplication.translate("ObjectOrient", u"-90", None))
+        self.y_rot_add_btn.setText(QCoreApplication.translate("ObjectOrient", u"+90", None))
+        self.y_rot_sub_btn.setText(QCoreApplication.translate("ObjectOrient", u"-90", None))
+        self.z_rot_add_btn.setText(QCoreApplication.translate("ObjectOrient", u"+90", None))
+        self.z_rot_sub_btn.setText(QCoreApplication.translate("ObjectOrient", u"-90", None))
+        self.rotate_to_xz_btn.setText(QCoreApplication.translate("ObjectOrient", u"XZ", None))
+        self.rotate_to_xy_btn.setText(QCoreApplication.translate("ObjectOrient", u"XY", None))
+        self.rotate_to_yz_btn.setText(QCoreApplication.translate("ObjectOrient", u"YZ", None))
+        self.rotate_to_yx_btn.setText(QCoreApplication.translate("ObjectOrient", u"YX", None))
+        self.rotate_to_zx_btn.setText(QCoreApplication.translate("ObjectOrient", u"ZX", None))
+        self.rotate_to_zy_btn.setText(QCoreApplication.translate("ObjectOrient", u"ZY", None))
         self.set_origin_grp.setTitle(QCoreApplication.translate("ObjectOrient", u"Set Origin To", None))
 #if QT_CONFIG(tooltip)
-        self.to_center_btn.setToolTip(QCoreApplication.translate("ObjectOrient", u"<html><head/><body><p>Place the object with its center at the center of global coordinates.</p></body></html>", None))
+        self.set_origin_to_base_btn.setToolTip(QCoreApplication.translate("ObjectOrient", u"<html><head/><body><p>Place the object on the zero plane with its lowest point.</p><p><span style=\" font-style:italic;\">Hold down Shift to also move the object to the center along the other axes.</span></p></body></html>", None))
 #endif // QT_CONFIG(tooltip)
-        self.to_center_btn.setText(QCoreApplication.translate("ObjectOrient", u"Center", None))
+        self.set_origin_to_base_btn.setText(QCoreApplication.translate("ObjectOrient", u"Base", None))
 #if QT_CONFIG(tooltip)
-        self.drop_btn.setToolTip(QCoreApplication.translate("ObjectOrient", u"<html><head/><body><p>Place the object on the zero plane with its lowest point.</p><p><span style=\" font-style:italic;\">Hold down Shift to also move the object to the center along the other axes.</span></p></body></html>", None))
+        self.set_origin_to_selected_btn.setToolTip(QCoreApplication.translate("ObjectOrient", u"<html><head/><body><p>Calculate the center of the selected elements and move this point to the center of global coordinates.</p></body></html>", None))
 #endif // QT_CONFIG(tooltip)
-        self.drop_btn.setText(QCoreApplication.translate("ObjectOrient", u"Bottom", None))
+        self.set_origin_to_selected_btn.setText(QCoreApplication.translate("ObjectOrient", u"Selected", None))
 #if QT_CONFIG(tooltip)
-        self.to_selected_btn.setToolTip(QCoreApplication.translate("ObjectOrient", u"<html><head/><body><p>Calculate the center of the selected elements and move this point to the center of global coordinates.</p></body></html>", None))
+        self.set_origin_to_center_btn.setToolTip(QCoreApplication.translate("ObjectOrient", u"<html><head/><body><p>Place the object with its center at the center of global coordinates.</p></body></html>", None))
 #endif // QT_CONFIG(tooltip)
-        self.to_selected_btn.setText(QCoreApplication.translate("ObjectOrient", u"Selected", None))
+        self.set_origin_to_center_btn.setText(QCoreApplication.translate("ObjectOrient", u"Center", None))
         self.finalize_grp.setTitle(QCoreApplication.translate("ObjectOrient", u"Finalize", None))
         self.freeze_btn.setText(QCoreApplication.translate("ObjectOrient", u"Freeze", None))
         self.reset_btn.setText(QCoreApplication.translate("ObjectOrient", u"Reset", None))
-        self.restore_btn.setText(QCoreApplication.translate("ObjectOrient", u"Restore Transform", None))
+        self.restore_btn.setText(QCoreApplication.translate("ObjectOrient", u"Restore Initial Transform", None))
+        self.help_label_lb.setText(QCoreApplication.translate("ObjectOrient", u"<html><head/><body><p>Hold down the <span style=\" font-weight:600;\">Shift</span> or <span style=\" font-weight:600;\">Ctrl</span> key <br/>to change the action mode.</p></body></html>", None))
+        self.help_btn.setText(QCoreApplication.translate("ObjectOrient", u"?", None))
+        self.menuFile.setTitle(QCoreApplication.translate("ObjectOrient", u"File", None))
+        self.menuHelp.setTitle(QCoreApplication.translate("ObjectOrient", u"Help", None))
     # retranslateUi
 

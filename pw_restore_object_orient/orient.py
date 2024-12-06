@@ -17,7 +17,7 @@ class ObjOrient(object):
         self.object = obj
         self.init_points = self.get_init_points()
         self.base_point = None
-        self.freezed = False
+        self.frozen = False
         self.init_mx = self.object.getMatrix(worldSpace=True)
 
     def reset(self):
@@ -40,7 +40,7 @@ class ObjOrient(object):
         return points
 
     def move_to_start_position(self):
-        if not self.freezed:
+        if not self.frozen:
             raise Exception('Source object is not freezed')
         pi1, pi2, pi3 = [x[1] for x in self.init_points]
         x1, y1, z1 = tools.vector_list_to_basis(pi1, pi2, pi3)
@@ -49,8 +49,8 @@ class ObjOrient(object):
         pr1, pr2, pr3 = curr_points
         x2, y2, z2 = tools.vector_list_to_basis(pr1, pr2, pr3)
 
-        m1 = self.basis_to_transformation_matrix(x1, y1, z1, pi2)
-        m2 = self.basis_to_transformation_matrix(x2, y2, z2, pr2)
+        m1 = tools.basis_to_transformation_matrix(x1, y1, z1, pi2)
+        m2 = tools.basis_to_transformation_matrix(x2, y2, z2, pr2)
 
         self.object.setMatrix(m2.asMatrixInverse() * m1)
 
@@ -82,11 +82,13 @@ class ObjOrient(object):
         offset_m = dt.TransformationMatrix(orig_mx * mx.asMatrixInverse())
         return offset_m
 
-    def orient(self, main_axis=None):
+    def orient(self, main_axis=None, reverse_axis=False):
         self.clear_preview_axis()
         x, y, z = [a.normal() for a in tools.get_3axis_from_selection()]
         if main_axis:
             x, y, z = tools.align_up_to(x, y, z, main_axis)
+        if reverse_axis:
+            x, y, z = -x, -y, -z
         mx = tools.basis_to_transformation_matrix(x, y, z, self.center)
         final_mx = self.get_offset_matrix(mx)
         with UndoChunk():
@@ -98,11 +100,11 @@ class ObjOrient(object):
         self.object.setMatrix(self.object.getMatrix() * mx)
         self.drop_down()
 
-    def drop_down(self, to_center=False):
-        offset = tools.get_lowes_point(str(self.object))
+    def drop_down(self, down_only=False):
+        offset = tools.get_lowes_y_pos(str(self.object))
         pos = dt.Vector(0, -offset, 0)
-        if to_center:
-            center = dt.Vector(*tools.get_object_center(self.object))
+        if not down_only:
+            center = dt.Vector(self.center)
             center.y = 0
             pos -= center
         move(self.object, tuple(pos), relative=True)
@@ -151,7 +153,7 @@ class ObjOrient(object):
         p | self.create_axis(z * scale, color='b', center=center)
         return p
 
-    def show_axis(self, axes=None, scale=None, main_axis=None):
+    def show_axis(self, axes=None, scale=None, main_axis=None, reverse_axis=False):
         if not axes:
             try:
                 axes = [a.normal() for a in tools.get_3axis_from_selection()]
@@ -161,7 +163,9 @@ class ObjOrient(object):
         scale = scale or sum(self.object.boundingBox().max()) / 3
         x, y, z = axes
         if main_axis:
-            x, y, z = self.align_up_to(x, y, z, main_axis)
+            x, y, z = tools.align_up_to(x, y, z, main_axis)
+        if reverse_axis:
+            x, y, z = -x, -y, -z
         sel = selected()
         self.clear_preview_axis()
         self.create_basis(x, y, z, scale=scale)
@@ -176,7 +180,7 @@ class ObjOrient(object):
 
     def freeze_transformations(self):
         tools.freeze_transformations(self.object)
-        self.freezed = True
+        self.frozen = True
 
     def _create_offset_basis(self):
         pi1, pi2, pi3 = [x[1] for x in self.init_points]
