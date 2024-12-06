@@ -25,7 +25,7 @@ qMaya = ui.PyUI('MayaWindow').asQtObject()
 
 
 class ObjectOrientDialog(QMainWindow, dialog_UI.Ui_ObjectOrient):
-    manual_url = 'https://github.com/paulwinex/pw-maya-restore-object-orient/README.md'
+    manual_url = 'https://github.com/paulwinex/pw-maya-restore-object-orient/blob/master/README.md'
 
     def __init__(self):
         super(ObjectOrientDialog, self).__init__(qMaya)
@@ -94,6 +94,9 @@ class ObjectOrientDialog(QMainWindow, dialog_UI.Ui_ObjectOrient):
         self.freeze_btn.clicked.connect(self.on_freeze_pressed)
         self.reset_btn.clicked.connect(self.on_reset_pressed)
         self.restore_btn.clicked.connect(self.on_restore_pressed)
+        # Other
+        self.help_btn.clicked.connect(self.on_help_pressed)
+        self.manual_act.triggered.connect(self.on_help_pressed)
         # Variables
         self.orient = None  # type: ignore
         self.setFocusPolicy(Qt.StrongFocus)
@@ -256,6 +259,12 @@ class ObjectOrientDialog(QMainWindow, dialog_UI.Ui_ObjectOrient):
         except Exception as e:
             PopupError(str(e))
             traceback.print_exc()
+
+    def on_help_pressed(self):
+        import webbrowser
+        webbrowser.open(self.manual_url)
+
+    # key callbacks
 
     def update_texts(self) -> None:
         for w in self._alter_widgets:
