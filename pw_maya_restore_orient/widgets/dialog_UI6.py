@@ -16,16 +16,15 @@ from PySide6.QtGui import (QAction, QBrush, QColor, QConicalGradient,
     QIcon, QImage, QKeySequence, QLinearGradient,
     QPainter, QPalette, QPixmap, QRadialGradient,
     QTransform)
-from PySide6.QtWidgets import (QApplication, QCheckBox, QGridLayout, QGroupBox,
-    QHBoxLayout, QLabel, QMainWindow, QMenu,
-    QMenuBar, QPushButton, QSizePolicy, QVBoxLayout,
-    QWidget)
+from PySide6.QtWidgets import (QApplication, QGridLayout, QGroupBox, QHBoxLayout,
+    QLabel, QMainWindow, QMenu, QMenuBar,
+    QPushButton, QSizePolicy, QVBoxLayout, QWidget)
 
 class Ui_ObjectOrient(object):
     def setupUi(self, ObjectOrient):
         if not ObjectOrient.objectName():
             ObjectOrient.setObjectName(u"ObjectOrient")
-        ObjectOrient.resize(358, 792)
+        ObjectOrient.resize(358, 762)
         self.clise_act = QAction(ObjectOrient)
         self.clise_act.setObjectName(u"clise_act")
         self.manual_act = QAction(ObjectOrient)
@@ -96,11 +95,6 @@ class Ui_ObjectOrient(object):
 
 
         self.verticalLayout.addLayout(self.horizontalLayout)
-
-        self.preview_cbx = QCheckBox(self.align_grp)
-        self.preview_cbx.setObjectName(u"preview_cbx")
-
-        self.verticalLayout.addWidget(self.preview_cbx)
 
 
         self.verticalLayout_3.addWidget(self.align_grp)
@@ -319,10 +313,6 @@ class Ui_ObjectOrient(object):
         self.axis_x_btn.setText(QCoreApplication.translate("ObjectOrient", u"X", None))
         self.axis_y_btn.setText(QCoreApplication.translate("ObjectOrient", u"Y", None))
         self.axis_z_btn.setText(QCoreApplication.translate("ObjectOrient", u"Z", None))
-#if QT_CONFIG(tooltip)
-        self.preview_cbx.setToolTip(QCoreApplication.translate("ObjectOrient", u"<html><head/><body><p>Create axes of the basis and do not actually rotate</p></body></html>", None))
-#endif // QT_CONFIG(tooltip)
-        self.preview_cbx.setText(QCoreApplication.translate("ObjectOrient", u"Preview Mode", None))
         self.rotate_grp.setTitle(QCoreApplication.translate("ObjectOrient", u"Rotate Selected To", None))
         self.rotate_to_x_btn.setText(QCoreApplication.translate("ObjectOrient", u"X", None))
         self.rotate_to_y_btn.setText(QCoreApplication.translate("ObjectOrient", u"Y", None))

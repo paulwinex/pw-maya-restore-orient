@@ -1,6 +1,6 @@
 from pymel.core import *
 from . import tools
-
+from .tools import transformation_matrix_to_basis
 
 
 class ObjOrient(object):
@@ -35,7 +35,7 @@ class ObjOrient(object):
             random_shapes = all_shapes*3
 
         for sh in random_shapes:
-            vtx = sh.vtx[random.randint(0, polyEvaluate(sh, v=True))]
+            vtx = sh.vtx[random.randint(0, polyEvaluate(sh, v=True)-1)]
             points.append((vtx, vtx.getPosition('world')))
         return points
 
@@ -66,7 +66,7 @@ class ObjOrient(object):
         src_axis = tools.get_1axis_from_selection()
         tools.rotate_to_world_axis(src_axis, self.object, world_axis)
 
-    def rotate_to_world_plane(self, world_axis1: str, world_axis2: str, rot_axis = None):
+    def rotate_to_world_plane(self, world_axis1: str, world_axis2: str, rotation_axis = None):
         # for faves
         # sel = selected()
         # if all(isinstance(item, MeshFace) for item in sel):
@@ -75,25 +75,91 @@ class ObjOrient(object):
         # for other
         # else:
         src_axis = tools.get_1axis_from_selection()
-        tools.rotate_to_world_plane(src_axis, self.object, world_axis1, world_axis2, rot_axis)
+        tools.rotate_to_world_plane(src_axis, self.object, world_axis1, world_axis2, rotation_axis)
 
     def get_offset_matrix(self, mx):
+        """
+        Compute transformation matrix to offset object to other matrix
+        """
         orig_mx = self.object.getMatrix(worldSpace=True)
         offset_m = dt.TransformationMatrix(orig_mx * mx.asMatrixInverse())
         return offset_m
 
-    def orient(self, main_axis=None, reverse_axis=False):
+    def auto_orient(self, reverse_axis=False):
         self.clear_preview_axis()
         x, y, z = [a.normal() for a in tools.get_3axis_from_selection()]
-        if main_axis:
-            x, y, z = tools.align_up_to(x, y, z, main_axis)
+        new_mx = tools.rotation_matrix_to_closest_world_axis(x, y, z)
+
+        with UndoChunk():
+            tools.rotate_object_to_matrix(self.object, new_mx)
+            self.drop_down()
+
+    def orient_to_axis(self, main_axis: str = None, reverse_axis=False):
+        self.clear_preview_axis()
+        x, y, z = [a.normal() for a in tools.get_3axis_from_selection()]
+        new_mx = tools.rotation_matrix_to_axis(x, y, z, main_axis, reverse_axis)
+        mx = dt.TransformationMatrix(new_mx)
+        with UndoChunk():
+            tools.rotate_object_to_matrix(self.object, mx.asMatrixInverse())
+            self.drop_down()
+
+
+    # def _orient_to_axis(self, main_axis: str = None, reverse_axis=False):
+    #     self.clear_preview_axis()
+    #     x, y, z = [a.normal() for a in tools.get_3axis_from_selection()]
+    #     x, y, z = tools.rotation_matrix_to_axis(x, y, z, main_axis, reverse_axis)
+    #     mx = tools.basis_to_transformation_matrix(x, y, z, self.center)
+    #     new_mx = self.get_offset_matrix(mx)
+    #     with UndoChunk():
+    #         self.object.setMatrix(new_mx)
+    #         self.drop_down()
+
+    def __orient(self, main_axis: str = None, reverse_axis=False):
+        self.clear_preview_axis()
+        # get initial basis
+        x, y, z = [a.normal() for a in tools.get_3axis_from_selection()]
+        # get orient axis
+        if not main_axis:
+            main_axis = tools.closest_axis(y, True)
+        # else:
+        # if isinstance(main_axis, str):
+        #     main_axis = tools.get_world_axis_by_name(main_axis)
         if reverse_axis:
-            x, y, z = -x, -y, -z
+            if '-' in main_axis:
+                main_axis = main_axis.replace('-', '')
+            else:
+                main_axis = '-' + main_axis
+        # print('Orient axis', main_axis)
+        # tools.print_vectors(main_axis)
+        # align
+        x, y, z = tools.align_up_to(x, y, z, main_axis)
+        # if reverse_axis:
+        #     x, y, z = -x, -y, -z
+        tools.print_vectors(x, y, z)
         mx = tools.basis_to_transformation_matrix(x, y, z, self.center)
         final_mx = self.get_offset_matrix(mx)
         with UndoChunk():
             self.object.setMatrix(final_mx)
             self.drop_down()
+
+    def create_preview_axis(self, axes=None, scale=None, main_axis=None, reverse_axis=False):
+        self.clear_preview_axis()
+        if not axes:
+            try:
+                axes = [a.normal() for a in tools.get_3axis_from_selection()]
+            except tools.SelectionError as e:
+                displayWarning(str(e))
+                return
+        x, y, z = axes
+        if main_axis:
+            x, y, z = tools.align_up_to(x, y, z, main_axis)
+        if reverse_axis:
+            x, y, z = -x, -y, -z
+
+        axis_scale = scale or sum(self.object.boundingBox().max()) / 3
+        sel = selected()
+        self.create_basis(x, y, z, scale=axis_scale)
+        select(sel)
 
     def rotate_object(self, axis, degree):
         mx = tools.get_rotation_matrix(axis, degree, center=self.center)
@@ -152,24 +218,6 @@ class ObjOrient(object):
         p | self.create_axis(y * scale, color='g', center=center)
         p | self.create_axis(z * scale, color='b', center=center)
         return p
-
-    def show_axis(self, axes=None, scale=None, main_axis=None, reverse_axis=False):
-        if not axes:
-            try:
-                axes = [a.normal() for a in tools.get_3axis_from_selection()]
-            except tools.SelectionError as e:
-                displayWarning(str(e))
-                return
-        scale = scale or sum(self.object.boundingBox().max()) / 3
-        x, y, z = axes
-        if main_axis:
-            x, y, z = tools.align_up_to(x, y, z, main_axis)
-        if reverse_axis:
-            x, y, z = -x, -y, -z
-        sel = selected()
-        self.clear_preview_axis()
-        self.create_basis(x, y, z, scale=scale)
-        select(sel)
 
     def clear_preview_axis(self):
         if self.preview_axis_exists():

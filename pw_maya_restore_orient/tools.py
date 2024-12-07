@@ -1,4 +1,6 @@
 from itertools import chain
+from typing import Union
+
 import maya.api.OpenMaya as om
 import maya.cmds as cmds
 from pymel.core import *
@@ -455,9 +457,10 @@ def rotate_to_world_plane(src_axis: dt.Vector, obj,
     quaternion = dt.Quaternion(angle, rotation_axis)
     rotation_matrix = dt.TransformationMatrix()
     rotation_matrix.addRotationQuaternion(*list(quaternion), dt.Space.kWorld)
-    curr_matrix = obj.getMatrix()
-    new_matrix = curr_matrix * rotation_matrix
-    obj.setMatrix(new_matrix, worldSpace=True)
+    rotate_object_to_matrix(obj,  rotation_matrix)
+    # curr_matrix = obj.getMatrix()
+    # new_matrix = curr_matrix * rotation_matrix
+    # obj.setMatrix(new_matrix, worldSpace=True)
 
 
 def is_edge_loop_closed(edges):
@@ -491,6 +494,12 @@ def is_edge_loop_closed(edges):
         next_vertex_index = vertices[0].index() if vertices[0].index() != current_vertex_index else vertices[1].index()
         current_vertex_index = next_vertex_index
     return False
+
+
+def rotate_object_to_matrix(obj: nt.Transform, mx: dt.TransformationMatrix):
+    curr_matrix = obj.getMatrix()
+    new_matrix = curr_matrix * mx
+    obj.setMatrix(new_matrix, worldSpace=True)
 
 # TRIGONOMETRY
 
@@ -528,6 +537,9 @@ def transformation_matrix_to_basis(mx: dt.Matrix) -> tuple[dt.Vector, ...]:
 
 
 def get_rotation_matrix(axis: str, degree: float, center=None) -> dt.TransformationMatrix:
+    """
+    Return rotation matrix by axis and degree
+    """
     euler_rotate = [0, 0, 0]
     index = dict(x=0, y=1, z=2)[axis.lower().strip('-')]
     euler_rotate[index] += degree * (-1 if '-' in axis else 1)
@@ -537,17 +549,32 @@ def get_rotation_matrix(axis: str, degree: float, center=None) -> dt.Transformat
     return m
 
 
-def closest_axis(vector: dt.Vector) -> dt.Vector:
-    world_axis = dict(
-        x=dt.Vector([1, 0, 0]),
-        y=dt.Vector([0, 1, 0]),
-        z=dt.Vector([0, 0, 1])
-    )
-    values = {a: vector.normal().dot(world_axis[a]) for a in world_axis}
-    return world_axis[sorted(values.keys(), key=lambda x: values[x])[-1]]
+def closest_axis(vector: dt.Vector, axis_name=False) -> Union[dt.Vector, str]:
+    world_axis = {
+        'x': dt.Vector([1, 0, 0]),
+        'y': dt.Vector([0, 1, 0]),
+        'z': dt.Vector([0, 0, 1]),
+        '-x': dt.Vector([-1, 0, 0]),
+        '-y': dt.Vector([0, -1, 0]),
+        '-z': dt.Vector([0, 0, -1])
+    }
+
+    closest_axis_key = None
+    max_cosine = -1
+
+    for axis_key, axis_vector in world_axis.items():
+        cosine = vector * axis_vector
+        if cosine > max_cosine:
+            max_cosine = cosine
+            closest_axis_key = axis_key
+
+    if axis_name:
+        return closest_axis_key
+    else:
+        return world_axis[closest_axis_key]
 
 
-def align_up_to(x: dt.Vector, y: dt.Vector, z: dt.Vector, to_axis) -> tuple[dt.Vector, ...]:
+def align_up_to(x: dt.Vector, y: dt.Vector, z: dt.Vector, to_axis: str) -> tuple[dt.Vector, ...]:
     c = dt.Vector()
     if to_axis == 'x':
         rm = get_rotation_matrix('z', -90, c)
@@ -562,7 +589,85 @@ def align_up_to(x: dt.Vector, y: dt.Vector, z: dt.Vector, to_axis) -> tuple[dt.V
     elif to_axis == '-z':
         rm = get_rotation_matrix('x', -90, c)
     else:
-        raise
+        raise Exception(f'Invalid axis {to_axis}')
     mx = basis_to_transformation_matrix(x, y, z, c)
     r_mx = rm * mx
     return transformation_matrix_to_basis(r_mx)
+
+
+def closest_world_axis_matrix(x: dt.Vector, y: dt.Vector, z: dt.Vector) -> dt.TransformationMatrix:
+    """
+    Rotate the given basis vectors (x, y, z) to align with the closest world axes.
+    If axis_name is provided, the y vector will be aligned with the specified axis.
+    """
+    closest_x = closest_axis(x.normal()).normal()
+    closest_y = closest_axis(y.normal()).normal()
+    closest_z = closest_y.cross(closest_x.normal()).normal()
+    return basis_to_transformation_matrix(fix_basis(closest_x, closest_y, closest_z))
+
+
+def rotation_matrix_to_closest_world_axis(x: dt.Vector, y: dt.Vector, z: dt.Vector) -> dt.TransformationMatrix:
+    """
+    Rotate the given basis vectors (x, y, z) to align with the closest world axes.
+    If axis_name is provided, the y vector will be aligned with the specified axis.
+    """
+    closest_x = closest_axis(x.normal()).normal()
+    closest_y = closest_axis(y.normal()).normal()
+    closest_z = closest_y.cross(closest_x.normal()).normal()
+    src_matrix = basis_to_transformation_matrix(x, y, z)
+    target_matrix = basis_to_transformation_matrix(closest_x, closest_y, closest_z)
+    rotation_matrix = src_matrix.asMatrixInverse() * target_matrix
+    return rotation_matrix
+
+
+def rotation_matrix_to_axis(x, y, z, axis_to_rotate: str, reverse_axis: bool = False)-> dt.TransformationMatrix:
+    """
+    Rotate Y axis from basis to specified world axis (x, y, z, -x, -y, -z)
+    1. Get world axis by name
+    2. Get rotation matrix to selected axis
+    """
+    if reverse_axis:
+        axis_to_rotate = reversed_axis_name(axis_to_rotate)
+    target_y = get_world_axis_by_name(axis_to_rotate).normal()
+    target_z = target_y.cross(x.normal())
+    if target_z.length() < 0.1:
+        target_z = target_y.cross(y.normal())
+    target_x = target_z.cross(target_y)
+    target_basis = fix_basis(target_x, target_y, target_z)
+    rotation_matrix = rotation_matrix_between_basis(x, y, z, *target_basis)
+    return  rotation_matrix
+
+
+
+def rotation_matrix_between_basis(x1, y1, z1, x2, y2, z2):
+    """
+    Compute the rotation matrix that transforms the basis (x1, y1, z1) to (x2, y2, z2).
+    """
+    mx1 = basis_to_transformation_matrix(x1, y1, z1)
+    mx2 = basis_to_transformation_matrix(x2, y2, z2)
+    rotation_matrix = mx2.asMatrixInverse() * mx1
+    return rotation_matrix
+
+
+def get_world_axis_by_name(name: str) -> dt.Vector:
+    world_axis = dict(
+        x=dt.Vector([1, 0, 0]),
+        y=dt.Vector([0, 1, 0]),
+        z=dt.Vector([0, 0, 1])
+    )
+    axis = world_axis[name.strip('-')]
+    if '-' in name:
+        axis *= -1
+    return axis
+
+
+def reversed_axis_name(axis_name: str):
+    if '-' in axis_name:
+        return axis_name.replace('-', '')
+    else:
+        return '-' + axis_name
+
+
+def print_vectors(*vectors: list):
+    for vec in vectors:
+        print(*[f'{round(val, 2):>5}' for val in vec])

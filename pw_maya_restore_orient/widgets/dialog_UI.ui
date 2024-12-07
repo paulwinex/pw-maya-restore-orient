@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>358</width>
-    <height>792</height>
+    <height>762</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -145,16 +145,6 @@
           </widget>
          </item>
         </layout>
-       </item>
-       <item>
-        <widget class="QCheckBox" name="preview_cbx">
-         <property name="toolTip">
-          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Create axes of the basis and do not actually rotate&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-         </property>
-         <property name="text">
-          <string>Preview Mode</string>
-         </property>
-        </widget>
        </item>
       </layout>
      </widget>

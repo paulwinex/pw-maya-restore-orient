@@ -1,8 +1,5 @@
 from __future__ import absolute_import
-
 from importlib import reload
-
-from setuptools.errors import ExecError
 
 try:
     from PySide2.QtWidgets import *
@@ -18,6 +15,7 @@ from functools import partial
 import traceback
 from pymel.core import *
 from . import orient
+
 reload(dialog_UI)
 
 
@@ -37,7 +35,7 @@ class ObjectOrientDialog(QMainWindow, dialog_UI.Ui_ObjectOrient):
         self.set_obj_btn.setProperty('btn_text', {'default': 'Set Object', 'shift': 'Reset Object'})
         # Align selected
         self.align_btn.clicked.connect(self.on_align_pressed)
-        self.align_btn.setProperty('btn_text', {'default': 'Quick Align', 'shift': '-Quick Align', 'ctrl': 'Preview'})
+        self.align_btn.setProperty('btn_text', {'default': 'Quick Align', 'ctrl': 'Preview'})
         self.axis_x_btn.clicked.connect(partial(self.on_align_pressed, 'x'))
         self.axis_x_btn.setProperty('btn_text', {'default': 'X', 'shift': '-X'})
         self.axis_y_btn.clicked.connect(partial(self.on_align_pressed, 'y'))
@@ -141,25 +139,23 @@ class ObjectOrientDialog(QMainWindow, dialog_UI.Ui_ObjectOrient):
         if not self.orient:
             PopupError('Object not set')
             return
-
         if self.orient.preview_axis_exists():
             self.orient.clear_preview_axis()
-        if not self.control_pressed:
-            preview = self.preview_cbx.isChecked()
-            if preview:
-                try:
-                    with UndoChunk():
-                        self.orient.show_axis(main_axis=main_axis, reverse_axis=self.shift_pressed)
-                except Exception as e:
-                    PopupError(str(e))
-                    traceback.print_exc()
-            else:
-                try:
-                    with UndoChunk():
-                        self.orient.orient(main_axis, reverse_axis=self.shift_pressed)
-                except Exception as e:
-                    PopupError(str(e))
-                    traceback.print_exc()
+        if self.control_pressed:
+            try:
+                self.orient.create_preview_axis(main_axis=main_axis, reverse_axis=self.shift_pressed)
+            except Exception as e:
+                PopupError(str(e))
+                traceback.print_exc()
+        else:
+            try:
+                if main_axis:
+                    self.orient.orient_to_axis(main_axis, self.shift_pressed)
+                else:
+                    self.orient.auto_orient(self.shift_pressed)
+            except Exception as e:
+                PopupError(str(e))
+                traceback.print_exc()
 
     def on_rotate_pressed(self, axis: str, mult: float):
         value = 90
