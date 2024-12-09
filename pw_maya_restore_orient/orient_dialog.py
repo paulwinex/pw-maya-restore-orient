@@ -32,7 +32,7 @@ class ObjectOrientDialog(QMainWindow, dialog_UI.Ui_ObjectOrient):
         self._alter_widgets = []
         # Current Object
         self.set_obj_btn.clicked.connect(self.set_object)
-        self.set_obj_btn.setProperty('btn_text', {'default': 'Set Object', 'shift': 'Reset Object'})
+        self.set_obj_btn.setProperty('btn_text', {'default': 'Set Object', 'ctrl': 'Unset'})
         # Align selected
         self.align_btn.clicked.connect(self.on_align_pressed)
         self.align_btn.setProperty('btn_text', {'default': 'Quick Align', 'ctrl': 'Preview'})
@@ -47,8 +47,14 @@ class ObjectOrientDialog(QMainWindow, dialog_UI.Ui_ObjectOrient):
         ])
         # Rotate selected to
         self.rotate_to_x_btn.clicked.connect(partial(self.rotate_to_world_axis, 'x'))
+        self.rotate_to_x_btn.setProperty('btn_text', {'default': 'X', 'shift': '-X'})
         self.rotate_to_y_btn.clicked.connect(partial(self.rotate_to_world_axis, 'y'))
+        self.rotate_to_y_btn.setProperty('btn_text', {'default': 'Y', 'shift': '-Y'})
         self.rotate_to_z_btn.clicked.connect(partial(self.rotate_to_world_axis, 'z'))
+        self.rotate_to_z_btn.setProperty('btn_text', {'default': 'Z', 'shift': '-Z'})
+        self._alter_widgets.extend([
+            self.rotate_to_x_btn, self.rotate_to_y_btn, self.rotate_to_z_btn,
+        ])
 
         self.rotate_to_xz_btn.clicked.connect(partial(self.rotate_to_world_plane, 'x', 'z'))
         self.rotate_to_xz_btn.setProperty('btn_text', {'default': 'XZ', 'shift': 'Xz', 'ctrl': 'xZ'})
@@ -85,9 +91,11 @@ class ObjectOrientDialog(QMainWindow, dialog_UI.Ui_ObjectOrient):
             self.z_rot_add_btn, self.z_rot_sub_btn,
         ])
         # Set origin
-        self.set_origin_to_base_btn.clicked.connect(self.on_origin_to_y_pressed)
+        self.set_origin_to_base_btn.clicked.connect(self.on_origin_to_base_pressed)
+        self.set_origin_to_base_btn.setProperty('btn_text', {'default': 'Base', 'ctrl': 'Drop Down'})
         self.set_origin_to_center_btn.clicked.connect(self.on_origin_to_center_pressed)
         self.set_origin_to_selected_btn.clicked.connect(self.on_origin_to_selected_pressed)
+        self._alter_widgets.append(self.set_origin_to_base_btn)
         # Finalize
         self.freeze_btn.clicked.connect(self.on_freeze_pressed)
         self.reset_btn.clicked.connect(self.on_reset_pressed)
@@ -112,7 +120,7 @@ class ObjectOrientDialog(QMainWindow, dialog_UI.Ui_ObjectOrient):
 
     def set_object(self, obj: nt.Transform = None) -> None:
         self.reset_object()
-        if self.shift_pressed:
+        if self.control_pressed:
             return
         if not obj:
             sel = selected()
@@ -152,7 +160,7 @@ class ObjectOrientDialog(QMainWindow, dialog_UI.Ui_ObjectOrient):
                 if main_axis:
                     self.orient.orient_to_axis(main_axis, self.shift_pressed)
                 else:
-                    self.orient.auto_orient(self.shift_pressed)
+                    self.orient.auto_orient()
             except Exception as e:
                 PopupError(str(e))
                 traceback.print_exc()
@@ -172,7 +180,7 @@ class ObjectOrientDialog(QMainWindow, dialog_UI.Ui_ObjectOrient):
         if not self.orient:
             return
         try:
-            self.orient.rotate_to_world_axis(axis)
+            self.orient.rotate_to_world_axis(axis, self.shift_pressed)
         except Exception as e:
             traceback.print_exc()
             PopupError(str(e))
@@ -200,11 +208,14 @@ class ObjectOrientDialog(QMainWindow, dialog_UI.Ui_ObjectOrient):
             PopupError(str(e))
             traceback.print_exc()
 
-    def on_origin_to_y_pressed(self) -> None:
+    def on_origin_to_base_pressed(self) -> None:
         if not self.orient:
             return
         try:
-            self.orient.move_to_origin()
+            if self.control_pressed:
+                self.orient.drop_down()
+            else:
+                self.orient.move_to_origin()
         except Exception as e:
             PopupError(str(e))
             traceback.print_exc()

@@ -9,6 +9,12 @@ class SelectionError(Exception):
     pass
 
 
+world_axis_list = {
+    'x': dt.Vector(1, 0, 0),
+    'y': dt.Vector(0, 1, 0),
+    'z': dt.Vector(0, 0, 1)
+}
+
 # MAYA GEOMETRY
 
 def get_lowest_point_for_object(obj):
@@ -50,7 +56,6 @@ def get_lowes_y_pos(*objects: str) -> float:
     shapes = list(*chain(cmds.listRelatives(x, allDescendents=True, type='mesh') for x in objects))
     if not shapes:
         raise ValueError('No mesh objects found')
-    print('Compute objects count:', len(shapes))
     return get_lowest_y_coord_for_list(shapes)
 
 
@@ -249,10 +254,13 @@ def get_3axis_from_1_point(pt: dt.Point):
 
 def get_3axis_from_face(face: MeshFace):
     edges = [face.node().e[x] for x in face.getEdges()]
-    e_map = {x.getLength('world'): x for x in edges}
-    biggest = max(e_map.items())[1]
-    pt1, pt2 = biggest.connectedVertices()
-    x = (pt1.getPosition('world') - pt2.getPosition('world')).normal()
+    len_edge_map = {round(x.getLength('world'), 3): x for x in edges}
+    if len(set(len_edge_map.keys())) == 1:
+        base_edge = sorted(len_edge_map.values(), key=lambda e: e.index())[0]
+    else:
+        base_edge = max(len_edge_map.items())[1]
+    pt1, pt2 = sorted(base_edge.connectedVertices())
+    x = (pt2.getPosition('world') - pt1.getPosition('world')).normal()
     y = face.getNormal('world').normal()
     z = x.cross(y)
     return fix_basis(x, y, z)
@@ -372,19 +380,34 @@ def faces_to_basis(faces) -> tuple[dt.Vector, ...]:
 
 # Geo Operations
 
-def rotate_to_world_axis(src_axis: dt.Vector, obj, world_axis: str):
+def rotate_to_world_axis(src_axis: dt.Vector, obj, world_axis: str, reverse_axis: bool = False):
     obj = PyNode(obj)
     if not src_axis:
         return
-    target_axis = {
-        'x': dt.Vector(1, 0, 0),
-        'y': dt.Vector(0, 1, 0),
-        'z': dt.Vector(0, 0, 1)
-    }[world_axis]
-    if src_axis * target_axis < 0:
-        target_axis = -target_axis
-    angle = src_axis.angle(target_axis)
+    target_axis = world_axis_list[world_axis]
+    print_vectors(src_axis)
     rotation_axis = src_axis.cross(target_axis)
+    print_vectors(rotation_axis)
+    if rotation_axis.length() < 0.1:
+        for a in world_axis_list.values():
+            if abs(a.dot(src_axis)) < 0.1:
+                continue
+            rotation_axis = abs(a)#.cross(src_axis)
+            break
+        else:
+            print('Error rotate axis')
+    print_vectors(rotation_axis)
+    if rotation_axis.length() < 0.1:
+        raise Exception('Error rotate axis')
+    if reverse_axis:
+        target_axis = -target_axis
+    print_vectors(target_axis)
+    print_vectors(rotation_axis)
+    # if src_axis * target_axis < 0:
+    #     print('REVERSE 2')
+    #     target_axis = -target_axis
+    angle = src_axis.angle(target_axis)
+    print_vectors(rotation_axis)
     quaternion = dt.Quaternion(angle, rotation_axis)
     rotation_matrix = dt.TransformationMatrix()
     rotation_matrix.addRotationQuaternion(*list(quaternion), dt.Space.kWorld)
@@ -614,8 +637,8 @@ def rotation_matrix_to_closest_world_axis(x: dt.Vector, y: dt.Vector, z: dt.Vect
     closest_x = closest_axis(x.normal()).normal()
     closest_y = closest_axis(y.normal()).normal()
     closest_z = closest_y.cross(closest_x.normal()).normal()
-    src_matrix = basis_to_transformation_matrix(x, y, z)
-    target_matrix = basis_to_transformation_matrix(closest_x, closest_y, closest_z)
+    src_matrix = basis_to_transformation_matrix(*fix_basis(x, y, z))
+    target_matrix = basis_to_transformation_matrix(*fix_basis(closest_x, closest_y, closest_z))
     rotation_matrix = src_matrix.asMatrixInverse() * target_matrix
     return rotation_matrix
 
@@ -626,6 +649,7 @@ def rotation_matrix_to_axis(x, y, z, axis_to_rotate: str, reverse_axis: bool = F
     1. Get world axis by name
     2. Get rotation matrix to selected axis
     """
+    x, y, z = fix_basis(x, y ,z)
     if reverse_axis:
         axis_to_rotate = reversed_axis_name(axis_to_rotate)
     target_y = get_world_axis_by_name(axis_to_rotate).normal()
