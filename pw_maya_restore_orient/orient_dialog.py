@@ -123,14 +123,12 @@ class ObjectOrientDialog(QMainWindow, dialog_UI.Ui_ObjectOrient):
         if self.control_pressed:
             return
         if not obj:
-            sel = selected()
-            if not sel:
-                PopupError('Nothing selected')
+            from .tools import get_transform_node_from_selection
+            try:
+                obj = get_transform_node_from_selection()
+            except Exception as e:
+                PopupError(str(e))
                 return
-            if len(sel) > 1:
-                PopupError('Select single object only')
-                return
-            obj = sel[0]
         if not isinstance(obj, nt.Transform):
             PopupError('Select Transform Node')
             return

@@ -17,6 +17,17 @@ world_axis_list = {
 
 # MAYA GEOMETRY
 
+def get_transform_node_from_selection():
+    sel = selected()
+    if not sel:
+        raise SelectionError('Nothing selected')
+    sel = sel[0]
+    if isinstance(sel, nt.Transform):
+        return sel
+    if isinstance(sel, (MeshFace, MeshEdge, MeshVertex)):
+        return sel.node().getTransform()
+    raise SelectionError('Unsupported selection')
+
 def get_lowest_point_for_object(obj):
     selectionList = om.MSelectionList()
     selectionList.add(obj)
@@ -380,8 +391,7 @@ def faces_to_basis(faces) -> tuple[dt.Vector, ...]:
 
 # Geo Operations
 
-def rotate_to_world_axis(src_axis: dt.Vector, obj, world_axis: str, reverse_axis: bool = False):
-    obj = PyNode(obj)
+def rotate_to_world_axis(src_axis: dt.Vector, world_axis: str, reverse_axis: bool = False):
     if not src_axis:
         return
     target_axis = world_axis_list[world_axis]
@@ -411,8 +421,7 @@ def rotate_to_world_axis(src_axis: dt.Vector, obj, world_axis: str, reverse_axis
     quaternion = dt.Quaternion(angle, rotation_axis)
     rotation_matrix = dt.TransformationMatrix()
     rotation_matrix.addRotationQuaternion(*list(quaternion), dt.Space.kWorld)
-    curr_matrix = obj.getMatrix()
-    obj.setMatrix(curr_matrix * rotation_matrix, worldSpace=True)
+    return rotation_matrix
 
 
 def _rotate_to_world_plane(src_axis: dt.Vector, obj, world_axis1: str, world_axis2: str, rotation_axis: dt.Vector = None):
@@ -521,8 +530,7 @@ def is_edge_loop_closed(edges):
 
 def rotate_object_to_matrix(obj: nt.Transform, mx: dt.TransformationMatrix):
     curr_matrix = obj.getMatrix()
-    new_matrix = curr_matrix * mx
-    obj.setMatrix(new_matrix, worldSpace=True)
+    obj.setMatrix(curr_matrix * mx, worldSpace=True)
 
 # TRIGONOMETRY
 
@@ -573,14 +581,15 @@ def get_rotation_matrix(axis: str, degree: float, center=None) -> dt.Transformat
 
 
 def closest_axis(vector: dt.Vector, axis_name=False) -> Union[dt.Vector, str]:
-    world_axis = {
-        'x': dt.Vector([1, 0, 0]),
-        'y': dt.Vector([0, 1, 0]),
-        'z': dt.Vector([0, 0, 1]),
-        '-x': dt.Vector([-1, 0, 0]),
-        '-y': dt.Vector([0, -1, 0]),
-        '-z': dt.Vector([0, 0, -1])
-    }
+    # world_axis = {
+    #     'x': dt.Vector([1, 0, 0]),
+    #     'y': dt.Vector([0, 1, 0]),
+    #     'z': dt.Vector([0, 0, 1]),
+    #     '-x': dt.Vector([-1, 0, 0]),
+    #     '-y': dt.Vector([0, -1, 0]),
+    #     '-z': dt.Vector([0, 0, -1])
+    # }
+    world_axis = {**world_axis_list, **{f'-{k}': v*-1 for k, v in world_axis_list.items()}}
 
     closest_axis_key = None
     max_cosine = -1
@@ -643,11 +652,12 @@ def rotation_matrix_to_closest_world_axis(x: dt.Vector, y: dt.Vector, z: dt.Vect
     return rotation_matrix
 
 
-def rotation_matrix_to_axis(x, y, z, axis_to_rotate: str, reverse_axis: bool = False)-> dt.TransformationMatrix:
+def rotation_matrix_to_axis(x, y, z, axis_to_rotate: str, reverse_axis: bool = False, align_x: bool = None)-> dt.TransformationMatrix:
     """
     Rotate Y axis from basis to specified world axis (x, y, z, -x, -y, -z)
     1. Get world axis by name
     2. Get rotation matrix to selected axis
+    3. Rotate X axis to next world axis
     """
     x, y, z = fix_basis(x, y ,z)
     if reverse_axis:
@@ -657,8 +667,15 @@ def rotation_matrix_to_axis(x, y, z, axis_to_rotate: str, reverse_axis: bool = F
     if target_z.length() < 0.1:
         target_z = target_y.cross(y.normal())
     target_x = target_z.cross(target_y)
-    target_basis = fix_basis(target_x, target_y, target_z)
+    target_basis = fix_basis(target_x, target_y, target_z)  # fix z direction
     rotation_matrix = rotation_matrix_between_basis(x, y, z, *target_basis)
+    # if align_x:
+        # TODO
+        # new_basis = transformation_matrix_to_basis(rotation_matrix)
+        # next_axis = get_next_axis_name(axis_to_rotate)
+        # new_mx = rotation_matrix_to_axis(*new_basis, axis_to_rotate=main_axis, reverse_axis=reverse_axis)
+        # x = get_world_axis_by_name(align_x_to).normal()
+        # rotation_matrix = rotation_matrix_between_basis(x, y, z, *target_basis)
     return  rotation_matrix
 
 
@@ -690,6 +707,10 @@ def reversed_axis_name(axis_name: str):
         return axis_name.replace('-', '')
     else:
         return '-' + axis_name
+
+
+def get_next_axis_name(axis_name):
+    return (['x', 'y', 'z', 'x'].index(axis_name.lower().strip('-')) + 1) % 3
 
 
 def print_vectors(*vectors: list):
