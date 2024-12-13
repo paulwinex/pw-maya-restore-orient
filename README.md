@@ -61,41 +61,54 @@ This should be considered when choosing reference components.
 
 `Set Object` - Select the object you will work with. This can only be a `Transform` node.
 If a group is selected, all manipulations will affect all objects in the group.
-With the `Shift` key held, the current object will be reset.
+With the `Ctrl` key held, the current object will be unset.
 
 #### Align Selected
 
-`Quick Align` - Quickly align the object using the current selection. With the `Shift` key held, the reference vector is inverted.
+`Quick Align / Preview` - Quickly align the object using the current selection. With the `Shift` key held, the reference vector is inverted.
 Quick alignment selects the nearest world axis to the reference vector. Hold **Shift** to invert the alignment direction.
+Hold down `Ctrl` to preview the original axes for the selected element.
 
 `X/Y/Z` - Align the object using the current selection, with the selected reference element oriented along the chosen axis.
 Hold **Shift** to invert the direction of this axis.
 
 #### Rotate Selected To
 
-Group of buttons for quick rotation and orientation alignment.
+A group of buttons for quick rotation and alignment of orientation.
 
-`X/Y/Z` - Orient the object along the selected axis relative to the chosen element.
-The calculated vector will be directed exactly along the specified axis.
+`X/Y/Z` - Orient the object along the selected axis relative to the selected element. The calculated vector will be 
+directed exactly along the specified axis.
 
-`XZ/XY/YZ/YX/ZY/ZX` - Rotate the axis of the selected element to the chosen plane. Useful for correcting the orientation of the object
-after primary alignment.
+`XZ/XY/YZ/YX/ZY/ZX` - Rotate the axis of the selected element onto the chosen plane. This is convenient for 
+correcting the orientation of the object after the main alignment.
 
-By default, the shortest path is chosen. The rotation axis will be perpendicular to the reference vector lying on the specified plane.
-The `Shift` and `Ctrl` keys change the rotation axis. The chosen axis remains written on the button in uppercase.
+By default, the shortest path is selected. The rotation axis will be perpendicular to the reference 
+vector lying on the specified plane.
 
-For example, if you select an edge and press the `XZ` button, the object will rotate with the selected edge to the `xz` plane along the shortest path.
-If you hold `Shift`, the text on the button will change to `Xz`, meaning the rotation will occur along the `X` axis.
-If you hold `Ctrl`, the text will change to `xZ`, and the rotation axis will be the `Z` axis.
+The `Shift` and `Ctrl` keys modify the rotation axis. The selected axis remains capitalized on the button.
+
+For example, if you select an edge and press the `ZY` button, the object will rotate the selected edge to the `ZY` 
+plane around the perpendicular to the reference vector that lies on the plane.
+
+![](images/perpendicular.gif)
+
+If you hold `Shift`, the text on the button will change to `Zy`, meaning the rotation will occur along the `Z` axis.
+
+![](images/along-z-axis.gif)
+
+If you hold `Ctrl`, the text will change to `Yz`, and the rotation axis will be the `Y` axis.
+
+![](images/along-y-axis.gif)
 
 This allows you to maintain the original orientation along the specified axis.
 
-`+90 / -90` - Rotate along the specified axis by the specified angle.
-Pressing `Shift` changes the angle to 180, and pressing `Ctrl` also changes the angle to 180.
+`+90 / -90` - rotation around the specified axis by the specified angle. When pressing `Shift`, the angle changes to 180; 
+with the `Ctrl` key, the angle also changes to 180.
 
 #### Set Origin To
 
-`Base` - Move the object to the center of coordinates along `X` and `Z` and align the lowest point to 0 along the `Y` axis.
+`Base / Drop Down` - Move the object to the center of coordinates along `X` and `Z` and align the lowest point to 0 along the `Y` axis.
+Hold `Ctrl` to move only along the `Y` axis down.
 
 `Center` - Move the center of the object to the center of world coordinates.
 
@@ -107,15 +120,46 @@ Pressing `Shift` changes the angle to 180, and pressing `Ctrl` also changes the 
 
 `Reset` - Reset the changes to the current object.
 
-`Restore Transform` - Restore the original position of the object in the scene after restoring transformations.
+`Restore Initial Transform` - Restore the original position of the object in the scene after restoring transformations.
 This option is available after the `Freeze` command and before the current object selection is reset.
 The object will be moved to its original position but with the correct transformations relative to the new orientation and position.
 
 ### API
 
-> todo
+Example of restoring transformations for multiple objects using the API. 
+In this example, scale is not considered, assuming all objects have a scale of 100%.
+
+```python
+from pymel.core import *
+from pw_maya_restore_orient import tools, orient
+
+face1_index = 3  # index of the first polygon
+face1_axis = '-y'  # direction of the reference vector (normal) for the first polygon
+face2_index = 2  # index of the second polygon
+face2_plane = 'xy'  # plane to which we rotate the reference vector (normal of the second polygon)
+face2_rot_axis = 'y'  # rotation axis
+
+for obj in selected():
+    print('Restore orient for', obj)
+    ornt = orient.ObjOrient(obj)
+    select(ornt.object.f[face1_index])
+    ornt.orient_to_axis(face1_axis)
+    select(ornt.object.f[face2_index])
+    ornt.rotate_to_world_plane(*face2_plane, face2_rot_axis)
+    d = tools.get_1axis_from_selection()
+    # flip 180 if aligned in the wrong direction
+    if d.dot(tools.world_axis_list['x']) < 0:
+        ornt.rotate_object('y', 180)
+    # move to the origin
+    ornt.move_to_origin()
+    # freeze transformations
+    ornt.freeze_transformations()
+    # restore to initial position
+    ornt.restore_init_transform()
+```
 
 ### TODO
 
-- Projection to the plane is not yet calculated for polygons
+- Projection onto a plane is not yet designed to work with polygons
+- Calculation and restoration of scale
 - Interface for aligning multiple identical objects according to one rule
