@@ -41,8 +41,7 @@ class ObjOrient(object):
         if len(all_shapes) >= 3:
             random_shapes = random.sample(all_shapes, 3)
         else:
-            random_shapes = all_shapes*3
-
+            random_shapes = (all_shapes*3)[:3]
         for sh in random_shapes:
             vtx = sh.vtx[random.randint(0, polyEvaluate(sh, v=True)-1)]
             points.append((vtx, vtx.getPosition(dt.Space.kWorld)))
