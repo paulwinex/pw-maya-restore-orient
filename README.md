@@ -37,11 +37,13 @@ pw_maya_restore_orient.show()
 - 1 edge
 - 2 edges
 - multiple edges (more than 2)
+- edge loop
 - 1 face
 - 1 point + 1 edge
 - 1 point + 2 edges
 - 2 faces
 - multiple faces (more than 2)
+- face loop
 
 #### Calculation of the Initial Vector
 
