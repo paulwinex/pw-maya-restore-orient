@@ -1,9 +1,11 @@
 from pymel.core import *
 from . import tools
-from .tools import transformation_matrix_to_basis
 
 
 class ObjOrient(object):
+    """
+    Main class to manage object orientation
+    """
     grp_name = 'axis'
     axes = dict(
         x=dt.Vector([1, 0, 0]),
@@ -16,6 +18,13 @@ class ObjOrient(object):
     def __init__(self, obj):
         self.object = obj
         self.init_points = self.get_init_points()
+        self.init_matrix = tools.basis_to_transformation_matrix(
+            *tools.fix_basis(
+                *tools.vector_list_to_basis(
+                    *[x[1] for x in self.init_points]
+                )
+            )
+        )
         self.base_point = None
         self.frozen = False
         self.init_mx = self.object.getMatrix(worldSpace=True)
@@ -36,23 +45,31 @@ class ObjOrient(object):
 
         for sh in random_shapes:
             vtx = sh.vtx[random.randint(0, polyEvaluate(sh, v=True)-1)]
-            points.append((vtx, vtx.getPosition('world')))
+            points.append((vtx, vtx.getPosition(dt.Space.kWorld)))
         return points
 
-    def move_to_start_position(self):
+    def get_restore_matrix(self):
+        # create initial matrix
+        init_pt1, init_pt2, init_pt3 = [pos for vtx, pos in self.init_points]
+        x1, y1, z1 = tools.vector_list_to_basis(init_pt1, init_pt2, init_pt3)
+        m1 = tools.basis_to_transformation_matrix(x1, y1, z1, init_pt2)
+        # create current matrix
+        curr_pt1, curr_pt12, curr_pt13 = [vtx.getPosition(dt.Space.kWorld) for vtx, _ in self.init_points]
+        m2 = tools.basis_to_transformation_matrix(
+            *tools.fix_basis(
+                *tools.vector_list_to_basis(
+                    curr_pt1, curr_pt12, curr_pt13
+                )
+            ), curr_pt12
+        )
+        # compute result matrix
+        return dt.TransformationMatrix(m2.asMatrixInverse() * m1)
+
+    def restore_init_transform(self):
         if not self.frozen:
-            raise Exception('Source object is not freezed')
-        pi1, pi2, pi3 = [x[1] for x in self.init_points]
-        x1, y1, z1 = tools.vector_list_to_basis(pi1, pi2, pi3)
-
-        curr_points = [vtx.getPosition('world') for vtx, init_pt in self.init_points]
-        pr1, pr2, pr3 = curr_points
-        x2, y2, z2 = tools.vector_list_to_basis(pr1, pr2, pr3)
-
-        m1 = tools.basis_to_transformation_matrix(x1, y1, z1, pi2)
-        m2 = tools.basis_to_transformation_matrix(x2, y2, z2, pr2)
-
-        self.object.setMatrix(m2.asMatrixInverse() * m1)
+            raise Exception('Source object is not frozen')
+        reverse_matrix = self.get_restore_matrix()
+        self.object.setMatrix(reverse_matrix)
 
     @property
     def object_vertex_count(self):
@@ -101,14 +118,14 @@ class ObjOrient(object):
         """
         self.clear_preview_axis()
         x, y, z = [a.normal() for a in tools.get_3axis_from_selection()]
-        new_mx = tools.rotation_matrix_to_axis(x, y, z, axis_to_rotate=main_axis, reverse_axis=reverse_axis, align_x=True)
+        new_mx = tools.rotation_matrix_to_axis(x, y, z, axis_to_rotate=main_axis, reverse_axis=reverse_axis)
         mx = dt.TransformationMatrix(new_mx)
 
         with UndoChunk():
             tools.rotate_object_to_matrix(self.object, mx.asMatrixInverse())
             self.move_to_origin()
 
-    def create_preview_axis(self, axes=None, scale=None, main_axis=None, reverse_axis=False):
+    def create_preview_axis(self, axes=None, scale=None, main_axis=None, reverse_axis=False, group_name=None):
         self.clear_preview_axis()
         if not axes:
             try:
@@ -124,14 +141,14 @@ class ObjOrient(object):
 
         axis_scale = scale or sum(map(abs, self.object.boundingBox().max())) / 3
         sel = selected()
-        self.create_basis(x, y, z, scale=axis_scale)
+        grp = self.create_basis(x, y, z, scale=axis_scale, group_name=group_name)
         select(sel)
+        return grp
 
     def rotate_object(self, axis, degree):
         center = dt.Vector(0,0,0)   # self.center ?
         mx = tools.get_rotation_matrix(axis, degree, center=center)
         self.object.setMatrix(self.object.getMatrix() * mx)
-        # self.drop_down()
 
     def drop_down(self):
         offset = tools.get_lowes_y_pos(str(self.object))
@@ -175,9 +192,9 @@ class ObjOrient(object):
         select(cl=1)
         return crv
 
-    def create_basis(self, x, y, z, scale=1, pos=None, parent_name=None):
+    def create_basis(self, x, y, z, scale=1, pos=None, group_name=None):
         center = pos or tools.get_selection_center()
-        p = createNode('transform', name=parent_name or self.grp_name)
+        p = createNode('transform', name=group_name or self.grp_name)
         p | self.create_axis(x * scale, color='r', center=center)
         p | self.create_axis(y * scale, color='g', center=center)
         p | self.create_axis(z * scale, color='b', center=center)

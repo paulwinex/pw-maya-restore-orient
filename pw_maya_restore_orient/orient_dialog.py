@@ -260,7 +260,7 @@ class ObjectOrientDialog(QMainWindow, dialog_UI.Ui_ObjectOrient):
         if not self.orient:
             return
         try:
-            self.orient.move_to_start_position()
+            self.orient.restore_init_transform()
         except Exception as e:
             PopupError(str(e))
             traceback.print_exc()
