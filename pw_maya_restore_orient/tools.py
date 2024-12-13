@@ -321,8 +321,8 @@ def get_3axis_from_multiple_edges(edges: list[MeshEdge]) -> tuple[dt.Vector, ...
 
 
 def get_3axis_from_2_points(pt1: dt.Point, pt2: dt.Point) -> tuple[dt.Vector, ...]:
-    x = (pt1.getPosition('world') - pt2.getPosition('world'))
-    y = ((pt1.getNormal('world') + pt2.getNormal('world')) / 2)
+    y = (pt1.getPosition('world') - pt2.getPosition('world'))
+    x = ((pt1.getNormal('world') + pt2.getNormal('world')) / 2)
     z = x.cross(y)
     return fix_basis(x.normal(), y.normal(), z.normal())
 
