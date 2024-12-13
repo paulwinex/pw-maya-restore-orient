@@ -23,7 +23,7 @@ qMaya = ui.PyUI('MayaWindow').asQtObject()
 
 
 class ObjectOrientDialog(QMainWindow, dialog_UI.Ui_ObjectOrient):
-    manual_url = 'https://github.com/paulwinex/pw-maya-restore-object-orient/blob/master/README.md'
+    manual_url = 'https://github.com/paulwinex/pw-maya-restore-orient'
 
     def __init__(self):
         super(ObjectOrientDialog, self).__init__(qMaya)
