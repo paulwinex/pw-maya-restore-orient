@@ -286,7 +286,6 @@ def get_3axis_from_multiple_faces(faces: list[MeshFace]) -> tuple[dt.Vector, ...
         return fix_basis(x, y, z)
     else:
         # probably is circle loop?
-        print('Circular loop')
         x = faces[0].getNormal('world').normal()
         next_index = len(faces)//4 if len(faces) > 3 else [-1]
         z = faces[next_index].getNormal('world').normal()
@@ -413,9 +412,6 @@ def rotate_to_world_axis(src_axis: dt.Vector, world_axis: str, reverse_axis: boo
         target_axis = -target_axis
     print_vectors(target_axis)
     print_vectors(rotation_axis)
-    # if src_axis * target_axis < 0:
-    #     print('REVERSE 2')
-    #     target_axis = -target_axis
     angle = src_axis.angle(target_axis)
     print_vectors(rotation_axis)
     quaternion = dt.Quaternion(angle, rotation_axis)
@@ -424,35 +420,9 @@ def rotate_to_world_axis(src_axis: dt.Vector, world_axis: str, reverse_axis: boo
     return rotation_matrix
 
 
-def _rotate_to_world_plane(src_axis: dt.Vector, obj, world_axis1: str, world_axis2: str, rotation_axis: dt.Vector = None):
-    obj = PyNode(obj)
-    world_axis_list = {
-        'x': dt.Vector(1, 0, 0),
-        'y': dt.Vector(0, 1, 0),
-        'z': dt.Vector(0, 0, 1)
-    }
-    axis1 = world_axis_list[world_axis1]
-    axis2 = world_axis_list[world_axis2]
-    plane_normal = axis1.cross(axis2)
-    projection = src_axis - (src_axis.dot(plane_normal) / plane_normal.dot(plane_normal)) * plane_normal
-    projection.normalize()
-    target_axis = projection
-    if src_axis.dot(target_axis) < 0:
-        target_axis = -target_axis
-    angle = src_axis.angle(target_axis)
-    rotation_axis = rotation_axis or src_axis.cross(target_axis)
-    quaternion = dt.Quaternion(angle, rotation_axis)
-    rotation_matrix = dt.TransformationMatrix()
-    rotation_matrix.addRotationQuaternion(*list(quaternion), dt.Space.kWorld)
-    curr_matrix = obj.getMatrix()
-    new_matrix = curr_matrix * rotation_matrix
-    obj.setMatrix(new_matrix, worldSpace=True)
-
-
 def rotate_to_world_plane(src_axis: dt.Vector, obj,
                           world_axis1: str, world_axis2: str,
                           rotation_axis: str = None):
-    print(f'Rotate to plane {world_axis1}{world_axis2} by {rotation_axis if rotation_axis else "closest"}')
     obj = PyNode(obj)
     world_axis_list = {
         'x': dt.Vector(1, 0, 0),
@@ -490,9 +460,6 @@ def rotate_to_world_plane(src_axis: dt.Vector, obj,
     rotation_matrix = dt.TransformationMatrix()
     rotation_matrix.addRotationQuaternion(*list(quaternion), dt.Space.kWorld)
     rotate_object_to_matrix(obj,  rotation_matrix)
-    # curr_matrix = obj.getMatrix()
-    # new_matrix = curr_matrix * rotation_matrix
-    # obj.setMatrix(new_matrix, worldSpace=True)
 
 
 def is_edge_loop_closed(edges):
@@ -581,14 +548,6 @@ def get_rotation_matrix(axis: str, degree: float, center=None) -> dt.Transformat
 
 
 def closest_axis(vector: dt.Vector, axis_name=False) -> Union[dt.Vector, str]:
-    # world_axis = {
-    #     'x': dt.Vector([1, 0, 0]),
-    #     'y': dt.Vector([0, 1, 0]),
-    #     'z': dt.Vector([0, 0, 1]),
-    #     '-x': dt.Vector([-1, 0, 0]),
-    #     '-y': dt.Vector([0, -1, 0]),
-    #     '-z': dt.Vector([0, 0, -1])
-    # }
     world_axis = {**world_axis_list, **{f'-{k}': v*-1 for k, v in world_axis_list.items()}}
 
     closest_axis_key = None
@@ -652,7 +611,7 @@ def rotation_matrix_to_closest_world_axis(x: dt.Vector, y: dt.Vector, z: dt.Vect
     return rotation_matrix
 
 
-def rotation_matrix_to_axis(x, y, z, axis_to_rotate: str, reverse_axis: bool = False, align_x: bool = None)-> dt.TransformationMatrix:
+def rotation_matrix_to_axis(x, y, z, axis_to_rotate: str, reverse_axis: bool = False, align_second_axis: bool = None)-> dt.TransformationMatrix:
     """
     Rotate Y axis from basis to specified world axis (x, y, z, -x, -y, -z)
     1. Get world axis by name
@@ -669,15 +628,7 @@ def rotation_matrix_to_axis(x, y, z, axis_to_rotate: str, reverse_axis: bool = F
     target_x = target_z.cross(target_y)
     target_basis = fix_basis(target_x, target_y, target_z)  # fix z direction
     rotation_matrix = rotation_matrix_between_basis(x, y, z, *target_basis)
-    # if align_x:
-        # TODO
-        # new_basis = transformation_matrix_to_basis(rotation_matrix)
-        # next_axis = get_next_axis_name(axis_to_rotate)
-        # new_mx = rotation_matrix_to_axis(*new_basis, axis_to_rotate=main_axis, reverse_axis=reverse_axis)
-        # x = get_world_axis_by_name(align_x_to).normal()
-        # rotation_matrix = rotation_matrix_between_basis(x, y, z, *target_basis)
     return  rotation_matrix
-
 
 
 def rotation_matrix_between_basis(x1, y1, z1, x2, y2, z2):
@@ -716,3 +667,20 @@ def get_next_axis_name(axis_name):
 def print_vectors(*vectors: list):
     for vec in vectors:
         print(*[f'{round(val, 2):>5}' for val in vec])
+
+
+def scale_object(obj: nt.Transform, scale_factor: float, center: dt.Vector):
+    mx = dt.TransformationMatrix(obj.getMatrix())
+    s_matrix = dt.TransformationMatrix()
+    s_matrix.setScalePivot(center, dt.Space.kWorld, False)
+    s_matrix.setScale([scale_factor] * 3, dt.Space.kWorld)
+    obj.setMatrix(mx*s_matrix, worldSpace=True)
+
+
+def set_scale(mx: dt.TransformationMatrix, scale_factor: float, center: dt.Vector):
+    if not isinstance(mx, dt.TransformationMatrix):
+        mx = dt.TransformationMatrix(mx)
+    mx.setScalePivot(center, 'world', False)
+    mx.setScale([scale_factor]*3, 'world')
+    return mx
+
