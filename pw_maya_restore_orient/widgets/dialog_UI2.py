@@ -154,49 +154,25 @@ class Ui_ObjectOrient(object):
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(self.rotate_to_xz_btn.sizePolicy().hasHeightForWidth())
         self.rotate_to_xz_btn.setSizePolicy(sizePolicy)
-        self.rotate_to_xz_btn.setMaximumSize(QSize(50, 16777215))
+        self.rotate_to_xz_btn.setMaximumSize(QSize(1000, 16777215))
 
-        self.gridLayout.addWidget(self.rotate_to_xz_btn, 2, 0, 1, 1)
+        self.gridLayout.addWidget(self.rotate_to_xz_btn, 2, 0, 1, 2)
 
         self.rotate_to_xy_btn = QPushButton(self.rotate_grp)
         self.rotate_to_xy_btn.setObjectName(u"rotate_to_xy_btn")
         sizePolicy.setHeightForWidth(self.rotate_to_xy_btn.sizePolicy().hasHeightForWidth())
         self.rotate_to_xy_btn.setSizePolicy(sizePolicy)
-        self.rotate_to_xy_btn.setMaximumSize(QSize(50, 16777215))
+        self.rotate_to_xy_btn.setMaximumSize(QSize(1000, 16777215))
 
-        self.gridLayout.addWidget(self.rotate_to_xy_btn, 2, 1, 1, 1)
+        self.gridLayout.addWidget(self.rotate_to_xy_btn, 2, 2, 1, 2)
 
         self.rotate_to_yz_btn = QPushButton(self.rotate_grp)
         self.rotate_to_yz_btn.setObjectName(u"rotate_to_yz_btn")
         sizePolicy.setHeightForWidth(self.rotate_to_yz_btn.sizePolicy().hasHeightForWidth())
         self.rotate_to_yz_btn.setSizePolicy(sizePolicy)
-        self.rotate_to_yz_btn.setMaximumSize(QSize(50, 16777215))
+        self.rotate_to_yz_btn.setMaximumSize(QSize(1000, 16777215))
 
-        self.gridLayout.addWidget(self.rotate_to_yz_btn, 2, 2, 1, 1)
-
-        self.rotate_to_yx_btn = QPushButton(self.rotate_grp)
-        self.rotate_to_yx_btn.setObjectName(u"rotate_to_yx_btn")
-        sizePolicy.setHeightForWidth(self.rotate_to_yx_btn.sizePolicy().hasHeightForWidth())
-        self.rotate_to_yx_btn.setSizePolicy(sizePolicy)
-        self.rotate_to_yx_btn.setMaximumSize(QSize(50, 16777215))
-
-        self.gridLayout.addWidget(self.rotate_to_yx_btn, 2, 3, 1, 1)
-
-        self.rotate_to_zx_btn = QPushButton(self.rotate_grp)
-        self.rotate_to_zx_btn.setObjectName(u"rotate_to_zx_btn")
-        sizePolicy.setHeightForWidth(self.rotate_to_zx_btn.sizePolicy().hasHeightForWidth())
-        self.rotate_to_zx_btn.setSizePolicy(sizePolicy)
-        self.rotate_to_zx_btn.setMaximumSize(QSize(50, 16777215))
-
-        self.gridLayout.addWidget(self.rotate_to_zx_btn, 2, 4, 1, 1)
-
-        self.rotate_to_zy_btn = QPushButton(self.rotate_grp)
-        self.rotate_to_zy_btn.setObjectName(u"rotate_to_zy_btn")
-        sizePolicy.setHeightForWidth(self.rotate_to_zy_btn.sizePolicy().hasHeightForWidth())
-        self.rotate_to_zy_btn.setSizePolicy(sizePolicy)
-        self.rotate_to_zy_btn.setMaximumSize(QSize(50, 16777215))
-
-        self.gridLayout.addWidget(self.rotate_to_zy_btn, 2, 5, 1, 1)
+        self.gridLayout.addWidget(self.rotate_to_yz_btn, 2, 4, 1, 2)
 
 
         self.verticalLayout_3.addWidget(self.rotate_grp)
@@ -319,9 +295,6 @@ class Ui_ObjectOrient(object):
         self.rotate_to_xz_btn.setText(QCoreApplication.translate("ObjectOrient", u"XZ", None))
         self.rotate_to_xy_btn.setText(QCoreApplication.translate("ObjectOrient", u"XY", None))
         self.rotate_to_yz_btn.setText(QCoreApplication.translate("ObjectOrient", u"YZ", None))
-        self.rotate_to_yx_btn.setText(QCoreApplication.translate("ObjectOrient", u"YX", None))
-        self.rotate_to_zx_btn.setText(QCoreApplication.translate("ObjectOrient", u"ZX", None))
-        self.rotate_to_zy_btn.setText(QCoreApplication.translate("ObjectOrient", u"ZY", None))
         self.set_origin_grp.setTitle(QCoreApplication.translate("ObjectOrient", u"Set Origin To", None))
 #if QT_CONFIG(tooltip)
         self.set_origin_to_base_btn.setToolTip(QCoreApplication.translate("ObjectOrient", u"<html><head/><body><p>Place the object on the zero plane with its lowest point.</p><p><span style=\" font-style:italic;\">Hold down Shift to also move the object to the center along the other axes.</span></p></body></html>", None))

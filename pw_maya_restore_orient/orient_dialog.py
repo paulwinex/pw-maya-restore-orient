@@ -62,15 +62,8 @@ class ObjectOrientDialog(QMainWindow, dialog_UI.Ui_ObjectOrient):
         self.rotate_to_xy_btn.setProperty('btn_text', {'default': 'XY', 'shift': 'Xy', 'ctrl': 'xY'})
         self.rotate_to_yz_btn.clicked.connect(partial(self.rotate_to_world_plane, 'y', 'z'))
         self.rotate_to_yz_btn.setProperty('btn_text', {'default': 'YZ', 'shift': 'Yz', 'ctrl': 'yZ'})
-        self.rotate_to_yx_btn.clicked.connect(partial(self.rotate_to_world_plane, 'y', 'x'))
-        self.rotate_to_yx_btn.setProperty('btn_text', {'default': 'YX', 'shift': 'Yx', 'ctrl': 'yX'})
-        self.rotate_to_zx_btn.clicked.connect(partial(self.rotate_to_world_plane, 'z', 'x'))
-        self.rotate_to_zx_btn.setProperty('btn_text', {'default': 'ZX', 'shift': 'Zx', 'ctrl': 'zX'})
-        self.rotate_to_zy_btn.clicked.connect(partial(self.rotate_to_world_plane, 'z', 'y'))
-        self.rotate_to_zy_btn.setProperty('btn_text', {'default': 'ZY', 'shift': 'Zy', 'ctrl': 'zY'})
         self._alter_widgets.extend([
             self.rotate_to_xz_btn, self.rotate_to_xy_btn, self.rotate_to_yz_btn,
-            self.rotate_to_yx_btn, self.rotate_to_zx_btn, self.rotate_to_zy_btn,
         ])
 
         self.x_rot_add_btn.clicked.connect(partial(self.on_rotate_pressed, 'x', 1))

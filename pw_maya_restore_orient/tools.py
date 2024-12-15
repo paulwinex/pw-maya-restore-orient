@@ -394,9 +394,7 @@ def rotate_to_world_axis(src_axis: dt.Vector, world_axis: str, reverse_axis: boo
     if not src_axis:
         return
     target_axis = world_axis_list[world_axis]
-    print_vectors(src_axis)
     rotation_axis = src_axis.cross(target_axis)
-    print_vectors(rotation_axis)
     if rotation_axis.length() < 0.1:
         for a in world_axis_list.values():
             if abs(a.dot(src_axis)) < 0.1:
@@ -405,15 +403,13 @@ def rotate_to_world_axis(src_axis: dt.Vector, world_axis: str, reverse_axis: boo
             break
         else:
             print('Error rotate axis')
-    print_vectors(rotation_axis)
     if rotation_axis.length() < 0.1:
         raise Exception('Error rotate axis')
+    if '-' in closest_axis(rotation_axis, axis_name=True):
+        rotation_axis = -rotation_axis
     if reverse_axis:
         target_axis = -target_axis
-    print_vectors(target_axis)
-    print_vectors(rotation_axis)
     angle = src_axis.angle(target_axis)
-    print_vectors(rotation_axis)
     quaternion = dt.Quaternion(angle, rotation_axis)
     rotation_matrix = dt.TransformationMatrix()
     rotation_matrix.addRotationQuaternion(*list(quaternion), dt.Space.kWorld)
@@ -667,6 +663,10 @@ def get_next_axis_name(axis_name):
 def print_vectors(*vectors: list):
     for vec in vectors:
         print(*[f'{round(val, 2):>5}' for val in vec])
+
+
+def repr_vector(vector: dt.Vector):
+    return f'[{round(vector.x, 2):>5}, {round(vector.y, 2):>5}, {round(vector.z, 2):>5}]'
 
 
 def scale_object(obj: nt.Transform, scale_factor: float, center: dt.Vector):
