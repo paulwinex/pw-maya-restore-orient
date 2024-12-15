@@ -122,6 +122,9 @@ class ObjOrient(object):
 
         with UndoChunk():
             tools.rotate_object_to_matrix(self.object, mx.asMatrixInverse())
+            x, y, z = [a.normal() for a in tools.get_3axis_from_selection()]
+            offset_mx = tools.rotation_matrix_to_closest_world_axis(x, y, z)
+            tools.rotate_object_to_matrix(self.object, offset_mx)
             self.move_to_origin()
 
     def create_preview_axis(self, axes=None, scale=None, main_axis=None, reverse_axis=False, group_name=None):
@@ -193,10 +196,11 @@ class ObjOrient(object):
 
     def create_basis(self, x, y, z, scale=1, pos=None, group_name=None):
         center = pos or tools.get_selection_center()
-        p = createNode('transform', name=group_name or self.grp_name)
-        p | self.create_axis(x * scale, color='r', center=center)
-        p | self.create_axis(y * scale, color='g', center=center)
-        p | self.create_axis(z * scale, color='b', center=center)
+        with UndoChunk():
+            p = createNode('transform', name=group_name or self.grp_name)
+            p | self.create_axis(x * scale, color='r', center=center)
+            p | self.create_axis(y * scale, color='g', center=center)
+            p | self.create_axis(z * scale, color='b', center=center)
         return p
 
     def clear_preview_axis(self):

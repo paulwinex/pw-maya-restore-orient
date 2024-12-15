@@ -401,8 +401,7 @@ def rotate_to_world_axis(src_axis: dt.Vector, world_axis: str, reverse_axis: boo
         for a in world_axis_list.values():
             if abs(a.dot(src_axis)) > 0.9:
                 continue
-            rotation_axis = abs(a)#.cross(src_axis)
-            print('rotation_axis.length() new', rotation_axis.length())
+            rotation_axis = abs(a)
             break
     if rotation_axis.length() < 0.1:
         raise Exception('Error rotate axis')
