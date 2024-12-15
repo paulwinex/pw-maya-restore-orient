@@ -35,7 +35,8 @@ class ObjectOrientDialog(QMainWindow, dialog_UI.Ui_ObjectOrient):
         self.set_obj_btn.setProperty('btn_text', {'default': 'Set Object', 'ctrl': 'Unset'})
         # Align selected
         self.align_btn.clicked.connect(self.on_align_pressed)
-        self.align_btn.setProperty('btn_text', {'default': 'Quick Align', 'ctrl': 'Preview'})
+        # self.align_btn.setProperty('btn_text', {'default': 'Quick Align', 'ctrl': 'Preview'})
+        self.preview_btn.clicked.connect(self.create_preview_axis_for_selection)
         self.axis_x_btn.clicked.connect(partial(self.on_align_pressed, 'x'))
         self.axis_x_btn.setProperty('btn_text', {'default': 'X', 'shift': '-X'})
         self.axis_y_btn.clicked.connect(partial(self.on_align_pressed, 'y'))
@@ -134,6 +135,16 @@ class ObjectOrientDialog(QMainWindow, dialog_UI.Ui_ObjectOrient):
         self.set_ui_enabled(False)
         self.obj_name_lb.setText('Object Not Set')
 
+    def create_preview_axis_for_selection(self, main_axis: str = None):
+        if self.orient.preview_axis_exists():
+            self.orient.clear_preview_axis()
+            return
+        try:
+            self.orient.create_preview_axis(main_axis=main_axis, reverse_axis=self.shift_pressed)
+        except Exception as e:
+            PopupError(str(e))
+            traceback.print_exc()
+
     def on_align_pressed(self, main_axis: str = None):
         if not self.orient:
             PopupError('Object not set')
@@ -141,11 +152,7 @@ class ObjectOrientDialog(QMainWindow, dialog_UI.Ui_ObjectOrient):
         if self.orient.preview_axis_exists():
             self.orient.clear_preview_axis()
         if self.control_pressed:
-            try:
-                self.orient.create_preview_axis(main_axis=main_axis, reverse_axis=self.shift_pressed)
-            except Exception as e:
-                PopupError(str(e))
-                traceback.print_exc()
+            self.create_preview_axis_for_selection(main_axis)
         else:
             try:
                 if main_axis:

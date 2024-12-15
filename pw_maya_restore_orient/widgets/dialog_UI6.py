@@ -24,7 +24,7 @@ class Ui_ObjectOrient(object):
     def setupUi(self, ObjectOrient):
         if not ObjectOrient.objectName():
             ObjectOrient.setObjectName(u"ObjectOrient")
-        ObjectOrient.resize(358, 762)
+        ObjectOrient.resize(358, 764)
         self.clise_act = QAction(ObjectOrient)
         self.clise_act.setObjectName(u"clise_act")
         self.manual_act = QAction(ObjectOrient)
@@ -58,6 +58,8 @@ class Ui_ObjectOrient(object):
         self.align_grp.setObjectName(u"align_grp")
         self.verticalLayout = QVBoxLayout(self.align_grp)
         self.verticalLayout.setObjectName(u"verticalLayout")
+        self.horizontalLayout_3 = QHBoxLayout()
+        self.horizontalLayout_3.setObjectName(u"horizontalLayout_3")
         self.align_btn = QPushButton(self.align_grp)
         self.align_btn.setObjectName(u"align_btn")
         self.align_btn.setMinimumSize(QSize(0, 40))
@@ -65,7 +67,16 @@ class Ui_ObjectOrient(object):
         font1.setPointSize(14)
         self.align_btn.setFont(font1)
 
-        self.verticalLayout.addWidget(self.align_btn)
+        self.horizontalLayout_3.addWidget(self.align_btn)
+
+        self.preview_btn = QPushButton(self.align_grp)
+        self.preview_btn.setObjectName(u"preview_btn")
+        self.preview_btn.setMinimumSize(QSize(0, 40))
+
+        self.horizontalLayout_3.addWidget(self.preview_btn)
+
+
+        self.verticalLayout.addLayout(self.horizontalLayout_3)
 
         self.horizontalLayout = QHBoxLayout()
         self.horizontalLayout.setObjectName(u"horizontalLayout")
@@ -278,7 +289,7 @@ class Ui_ObjectOrient(object):
     # setupUi
 
     def retranslateUi(self, ObjectOrient):
-        ObjectOrient.setWindowTitle(QCoreApplication.translate("ObjectOrient", u"Object Orient", None))
+        ObjectOrient.setWindowTitle(QCoreApplication.translate("ObjectOrient", u"pw Object Orient", None))
         self.clise_act.setText(QCoreApplication.translate("ObjectOrient", u"Close", None))
         self.manual_act.setText(QCoreApplication.translate("ObjectOrient", u"Manual", None))
         self.obj_btp.setTitle(QCoreApplication.translate("ObjectOrient", u"Crrent Object", None))
@@ -286,6 +297,7 @@ class Ui_ObjectOrient(object):
         self.obj_name_lb.setText(QCoreApplication.translate("ObjectOrient", u"Object Not Set", None))
         self.align_grp.setTitle(QCoreApplication.translate("ObjectOrient", u"Align Selected ", None))
         self.align_btn.setText(QCoreApplication.translate("ObjectOrient", u"Quick Align ", None))
+        self.preview_btn.setText(QCoreApplication.translate("ObjectOrient", u"Preview Axis", None))
         self.axis_x_btn.setText(QCoreApplication.translate("ObjectOrient", u"X", None))
         self.axis_y_btn.setText(QCoreApplication.translate("ObjectOrient", u"Y", None))
         self.axis_z_btn.setText(QCoreApplication.translate("ObjectOrient", u"Z", None))
@@ -300,8 +312,8 @@ class Ui_ObjectOrient(object):
         self.z_rot_add_btn.setText(QCoreApplication.translate("ObjectOrient", u"+90", None))
         self.z_rot_sub_btn.setText(QCoreApplication.translate("ObjectOrient", u"-90", None))
         self.rotate_to_xz_btn.setText(QCoreApplication.translate("ObjectOrient", u"XZ", None))
-        self.rotate_to_xy_btn.setText(QCoreApplication.translate("ObjectOrient", u"XY", None))
-        self.rotate_to_yz_btn.setText(QCoreApplication.translate("ObjectOrient", u"YZ", None))
+        self.rotate_to_xy_btn.setText(QCoreApplication.translate("ObjectOrient", u"YX", None))
+        self.rotate_to_yz_btn.setText(QCoreApplication.translate("ObjectOrient", u"ZY", None))
         self.set_origin_grp.setTitle(QCoreApplication.translate("ObjectOrient", u"Set Origin To", None))
 #if QT_CONFIG(tooltip)
         self.set_origin_to_base_btn.setToolTip(QCoreApplication.translate("ObjectOrient", u"<html><head/><body><p>Place the object on the zero plane with its lowest point.</p><p><span style=\" font-style:italic;\">Hold down Shift to also move the object to the center along the other axes.</span></p></body></html>", None))
