@@ -1,3 +1,4 @@
+import math
 from itertools import chain
 from typing import Union
 
@@ -393,23 +394,27 @@ def faces_to_basis(faces) -> tuple[dt.Vector, ...]:
 def rotate_to_world_axis(src_axis: dt.Vector, world_axis: str, reverse_axis: bool = False):
     if not src_axis:
         return
-    target_axis = world_axis_list[world_axis]
+    target_axis = world_axis_list[world_axis.strip('-')]
+    # rotation axis
     rotation_axis = src_axis.cross(target_axis)
     if rotation_axis.length() < 0.1:
         for a in world_axis_list.values():
-            if abs(a.dot(src_axis)) < 0.1:
+            if abs(a.dot(src_axis)) > 0.9:
                 continue
             rotation_axis = abs(a)#.cross(src_axis)
+            print('rotation_axis.length() new', rotation_axis.length())
             break
-        else:
-            print('Error rotate axis')
     if rotation_axis.length() < 0.1:
         raise Exception('Error rotate axis')
     if '-' in closest_axis(rotation_axis, axis_name=True):
+        # move to positive section
         rotation_axis = -rotation_axis
+    rotation_axis = rotation_axis.normal()
+    angle_mult = 1
     if reverse_axis:
         target_axis = -target_axis
-    angle = src_axis.angle(target_axis)
+        angle_mult = -1
+    angle = src_axis.angle(target_axis) * angle_mult
     quaternion = dt.Quaternion(angle, rotation_axis)
     rotation_matrix = dt.TransformationMatrix()
     rotation_matrix.addRotationQuaternion(*list(quaternion), dt.Space.kWorld)
@@ -492,8 +497,7 @@ def is_edge_loop_closed(edges):
 
 
 def rotate_object_to_matrix(obj: nt.Transform, mx: dt.TransformationMatrix):
-    curr_matrix = obj.getMatrix()
-    obj.setMatrix(curr_matrix * mx, worldSpace=True)
+    obj.setMatrix(obj.getMatrix() * mx, worldSpace=True)
 
 # TRIGONOMETRY
 
