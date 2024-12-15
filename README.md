@@ -94,13 +94,14 @@ plane around the perpendicular to the reference vector that lies on the plane.
 
 ![](images/perpendicular.gif)
 
+If you hold `Ctrl`, the text will change to `Yz`, and the rotation axis will be the `Y` axis.
+
+![](images/along-y-axis.gif)
+
 If you hold `Shift`, the text on the button will change to `Zy`, meaning the rotation will occur along the `Z` axis.
 
 ![](images/along-z-axis.gif)
 
-If you hold `Ctrl`, the text will change to `Yz`, and the rotation axis will be the `Y` axis.
-
-![](images/along-y-axis.gif)
 
 This allows you to maintain the original orientation along the specified axis.
 
