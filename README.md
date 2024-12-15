@@ -67,9 +67,10 @@ With the `Ctrl` key held, the current object will be unset.
 
 #### Align Selected
 
-`Quick Align / Preview` - Quickly align the object using the current selection. With the `Shift` key held, the reference vector is inverted.
+`Quick Align` - Quickly align the object using the current selection. With the `Shift` key held, the reference vector is inverted.
 Quick alignment selects the nearest world axis to the reference vector. Hold **Shift** to invert the alignment direction.
-Hold down `Ctrl` to preview the original axes for the selected element.
+
+`Preview Axis` - Creates a preview of the basis that is created from the current selection. Click again to remove the preview.
 
 `X/Y/Z` - Align the object using the current selection, with the selected reference element oriented along the chosen axis.
 Hold **Shift** to invert the direction of this axis.
@@ -80,6 +81,8 @@ A group of buttons for quick rotation and alignment of orientation.
 
 `X/Y/Z` - Orient the object along the selected axis relative to the selected element. The calculated vector will be 
 directed exactly along the specified axis.
+These commands differ from similar commands from the `Align Selected` group in that they only rotate the vector in the direction
+to the specified axis. The commands from `Align Selected` align the entire object to the generated basis.
 
 `XZ/XY/YZ/YX/ZY/ZX` - Rotate the axis of the selected element onto the chosen plane. This is convenient for 
 correcting the orientation of the object after the main alignment.
