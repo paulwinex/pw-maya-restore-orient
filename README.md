@@ -7,6 +7,8 @@ After separating the large object into individual objects, the Orient Tool will 
 of the original objects and move them to the center of the world coordinates.
 You can also return the restored object to its original location in the scene, but with the correct transformations.
 
+Quick preview https://www.youtube.com/watch?v=JvlHa0NEXu8
+
 ### Installation
 
 Copy the `pw_restore_object_orient` folder to the Maya scripts directory, for example `~/maya/scripts`
